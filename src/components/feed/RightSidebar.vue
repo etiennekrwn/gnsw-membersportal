@@ -1,37 +1,76 @@
 <script setup>
-import { mockEvents } from '../../data/mockEvents.js'
+import { computed, inject } from 'vue'
+import { Icon } from '@iconify/vue'
+import { getEvents } from '../../data/events.js'
+import { mockCourses } from '../../data/mockCourses.js'
 
-const typeColors = {
-  'Summit': 'bg-red-50 text-[#8b1e21]',
-  'Workshop': 'bg-blue-50 text-blue-700',
-  'Online Session': 'bg-green-50 text-green-700',
+const currentUser = inject('currentUser')
+
+const upcomingEvents = getEvents().slice(0, 3)
+
+const levelColors = {
+  Beginner: 'bg-green-50 text-green-700',
+  Intermediate: 'bg-blue-50 text-blue-700',
+  Advanced: 'bg-red-50 text-[#8b1e21]',
 }
+
+const TIER_LEVELS = { ROLE_ASSOCIATE: 1, ROLE_MEMBER: 2, ROLE_FELLOW: 3 }
+
+const recommendedCourses = computed(() =>
+  mockCourses.filter(
+    c => TIER_LEVELS[currentUser.value?.tier] >= TIER_LEVELS[c.tier]
+  )
+)
 </script>
 
 <template>
-  <aside class="w-72 shrink-0 pl-8 border-l border-[#eae8e4]">
+  <aside class="w-72 shrink-0 pl-8 border-l border-[#eae8e4] flex flex-col gap-10">
 
-    <h3 class="text-sm font-semibold text-[#111418] mb-5">Upcoming Events</h3>
-
-    <div class="flex flex-col gap-5">
-      <div
-        v-for="event in mockEvents"
-        :key="event.id"
-        class="cursor-pointer group"
+    <!-- Upcoming Events -->
+    <div>
+      <h3 class="text-xs font-bold uppercase tracking-widest text-[#111418] mb-5">Upcoming Events</h3>
+      <div class="flex flex-col gap-5">
+        <RouterLink
+          v-for="event in upcomingEvents"
+          :key="event.id"
+          :to="`/events/${event.id}`"
+          class="group no-underline cursor-pointer"
+        >
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-[#8b1e21]">{{ event.date }}</span>
+          <p class="text-sm font-semibold text-[#111418] mt-1 mb-1 leading-snug group-hover:text-[#8b1e21] transition-colors">
+            {{ event.title }}
+          </p>
+          <div class="flex items-center gap-1 text-xs text-gray-400">
+            <Icon icon="lucide:map-pin" width="11" height="11" />
+            <span>{{ event.city }}</span>
+          </div>
+        </RouterLink>
+      </div>
+      <RouterLink
+        to="/events"
+        class="mt-5 flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold text-gray-400 hover:text-[#111418] transition-colors no-underline"
       >
-        <!-- Type badge -->
-        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="typeColors[event.type] || 'bg-gray-100 text-gray-500'">
-          {{ event.type }}
-        </span>
+        View all events
+        <Icon icon="lucide:arrow-right" width="11" height="11" />
+      </RouterLink>
+    </div>
 
-        <!-- Title -->
-        <p class="text-sm font-semibold text-[#111418] mt-1.5 mb-1 leading-snug group-hover:text-[#8b1e21] transition-colors">
-          {{ event.title }}
-        </p>
-
-        <!-- Date & location -->
-        <p class="text-xs text-gray-400">{{ event.date }} · {{ event.time }}</p>
-        <p class="text-xs text-gray-400">{{ event.location }}</p>
+    <!-- Recommended Learning -->
+    <div>
+      <h3 class="text-xs font-bold uppercase tracking-widest text-[#111418] mb-5">Recommended Learning</h3>
+      <div class="flex flex-col gap-4">
+        <div v-for="course in recommendedCourses" :key="course.id" class="cursor-pointer group">
+          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="levelColors[course.level]">
+            {{ course.level }}
+          </span>
+          <h4 class="text-sm font-semibold text-[#111418] mt-1.5 mb-1 leading-snug group-hover:text-[#8b1e21] transition-colors">
+            {{ course.title }}
+          </h4>
+          <div class="flex items-center gap-3 text-xs text-gray-400">
+            <span>{{ course.lessons }} lessons</span>
+            <span>{{ course.duration }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
