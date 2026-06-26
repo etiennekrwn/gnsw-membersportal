@@ -1,0 +1,136 @@
+export const mockDrafts = [
+  {
+    id: 'draft-1',
+    title: 'Opening Remarks for the Digital Governance Forum',
+    excerpt: 'A draft speech welcoming participants and framing digital access as a public trust issue.',
+    body: 'Distinguished guests, colleagues, and partners — thank you for joining us as we open this year\'s Digital Governance Forum.\n\nDigital access is no longer a technical convenience. It is a public trust issue. When citizens cannot reach services, verify information, or participate in decisions online, institutions lose legitimacy one frustrated interaction at a time.\n\nToday we will examine three commitments: clarity in public communication, accountability in data stewardship, and inclusion in service design.',
+    lastModified: 'Jun 24, 2026',
+    wordCount: 860,
+    status: 'Draft',
+  },
+  {
+    id: 'draft-2',
+    title: 'Briefing Note on Youth Employment Messaging',
+    excerpt: 'Key talking points for explaining new employment initiatives to community leaders.',
+    body: 'Purpose: equip community leaders with accurate, plain-language talking points on the new youth employment initiative.\n\nKey message: the programme expands apprenticeships and paid placements in sectors with verified demand.\n\nLikely questions: eligibility, timeline, local implementation partners, and how outcomes will be measured.',
+    lastModified: 'Jun 22, 2026',
+    wordCount: 1240,
+    status: 'Draft',
+  },
+  {
+    id: 'draft-3',
+    title: 'Chairperson Address for the Annual Partners Dinner',
+    excerpt: 'A warm evening address focused on partnership, gratitude, and the year ahead.',
+    lastModified: 'Jun 20, 2026',
+    wordCount: 980,
+    status: 'Draft',
+  },
+  {
+    id: 'draft-4',
+    title: 'Holding Statement for Service Disruption',
+    excerpt: 'A concise public update acknowledging the disruption and explaining the next steps.',
+    lastModified: 'Jun 18, 2026',
+    wordCount: 420,
+    status: 'Draft',
+  },
+  {
+    id: 'draft-5',
+    title: 'Policy Launch Talking Points',
+    excerpt: 'Speaker notes highlighting the purpose, expected impact, and implementation timeline.',
+    lastModified: 'Jun 16, 2026',
+    wordCount: 710,
+    status: 'Draft',
+  },
+]
+
+export const mockPublished = [
+  {
+    id: 'published-1',
+    title: 'Why Every Speech Needs a Clear Promise',
+    excerpt: 'A practical look at how one central promise can organize a speech and make it easier for audiences to remember.',
+    datePublished: 'May 30, 2026',
+    readTime: 5,
+    claps: 284,
+    views: 2380,
+    status: 'Published',
+    articleId: 1,
+    thumbnail: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=900'
+  },
+  {
+    id: 'published-2',
+    title: 'Editing Executive Drafts Without Losing the Speaker',
+    excerpt: 'Strong edits sharpen the message while preserving the leader\'s natural voice, priorities, and sense of judgment.',
+    datePublished: 'Apr 18, 2026',
+    readTime: 7,
+    claps: 412,
+    views: 3910,
+    status: 'Published',
+    thumbnail: 'https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&q=80&w=900'
+  },
+  {
+    id: 'published-3',
+    title: 'The Quiet Work Behind Public Confidence',
+    excerpt: 'Trust is built before a crisis through accurate records, clear roles, and communication habits that hold under pressure.',
+    datePublished: 'Mar 25, 2026',
+    readTime: 6,
+    claps: 198,
+    views: 1740,
+    status: 'Published',
+    thumbnail: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&q=80&w=900'
+  },
+  {
+    id: 'published-4',
+    title: 'Building a Message House That Teams Actually Use',
+    excerpt: 'A message house is only useful when it gives busy teams shared language for interviews, speeches, and public updates.',
+    datePublished: 'Feb 12, 2026',
+    readTime: 4,
+    claps: 156,
+    views: 1425,
+    status: 'Published',
+    thumbnail: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&q=80&w=900'
+  },
+  {
+    id: 'published-5',
+    title: 'Preparing Principals for Difficult Questions',
+    excerpt: 'A good Q&A brief gives leaders accurate facts, likely challenges, and language that can be delivered calmly.',
+    datePublished: 'Jan 28, 2026',
+    readTime: 8,
+    claps: 367,
+    views: 2860,
+    status: 'Published',
+    thumbnail: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=900'
+  },
+  {
+    id: 'published-6',
+    title: 'From Notes to Narrative',
+    excerpt: 'Raw notes become useful speeches when the writer finds the tension, the audience need, and the action the moment requires.',
+    datePublished: 'Dec 14, 2025',
+    readTime: 5,
+    claps: 221,
+    views: 1998,
+    status: 'Published',
+    thumbnail: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=900'
+  },
+  {
+    id: 'published-7',
+    title: 'Writing Ceremony Remarks With Substance',
+    excerpt: 'Ceremonial remarks can still carry meaning when they connect the occasion to shared values and specific people in the room.',
+    datePublished: 'Nov 21, 2025',
+    readTime: 3,
+    claps: 144,
+    views: 1180,
+    status: 'Published',
+    thumbnail: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=900'
+  },
+  {
+    id: 'published-8',
+    title: 'The Discipline of the Short Speech',
+    excerpt: 'A short speech is not a compressed long speech. It needs one argument, one emotional turn, and a clean ending.',
+    datePublished: 'Oct 9, 2025',
+    readTime: 4,
+    claps: 309,
+    views: 2475,
+    status: 'Published',
+    thumbnail: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=900'
+  },
+]

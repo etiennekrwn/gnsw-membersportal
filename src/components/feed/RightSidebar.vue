@@ -1,10 +1,12 @@
 <script setup>
-import { computed, inject } from 'vue'
+import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { getEvents } from '../../data/events.js'
-import { mockCourses } from '../../data/mockCourses.js'
+import { getRecommendedCourses } from '../../data/courses.js'
 
-const currentUser = inject('currentUser')
+const props = defineProps({
+  userTier: { type: String, default: 'ROLE_ASSOCIATE' },
+})
 
 const upcomingEvents = getEvents().slice(0, 3)
 
@@ -14,12 +16,8 @@ const levelColors = {
   Advanced: 'bg-red-50 text-[#8b1e21]',
 }
 
-const TIER_LEVELS = { ROLE_ASSOCIATE: 1, ROLE_MEMBER: 2, ROLE_FELLOW: 3 }
-
 const recommendedCourses = computed(() =>
-  mockCourses.filter(
-    c => TIER_LEVELS[currentUser.value?.tier] >= TIER_LEVELS[c.tier]
-  )
+  getRecommendedCourses(props.userTier).slice(0, 4)
 )
 </script>
 
@@ -58,8 +56,13 @@ const recommendedCourses = computed(() =>
     <!-- Recommended Learning -->
     <div>
       <h3 class="text-xs font-bold uppercase tracking-widest text-[#111418] mb-5">Recommended Learning</h3>
-      <div class="flex flex-col gap-4">
-        <div v-for="course in recommendedCourses" :key="course.id" class="cursor-pointer group">
+      <div v-if="recommendedCourses.length" class="flex flex-col gap-4">
+        <RouterLink
+          v-for="course in recommendedCourses"
+          :key="course.id"
+          :to="`/learning/${course.id}`"
+          class="cursor-pointer group no-underline"
+        >
           <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full" :class="levelColors[course.level]">
             {{ course.level }}
           </span>
@@ -70,8 +73,12 @@ const recommendedCourses = computed(() =>
             <span>{{ course.lessons }} lessons</span>
             <span>{{ course.duration }}</span>
           </div>
-        </div>
+        </RouterLink>
       </div>
+      <p v-else class="text-xs text-gray-400 leading-relaxed">
+        No courses available for your membership tier yet.
+        <RouterLink to="/learning" class="text-[#8b1e21] font-semibold hover:underline">Browse learning</RouterLink>
+      </p>
     </div>
 
   </aside>
