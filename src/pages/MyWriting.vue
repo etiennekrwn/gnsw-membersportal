@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import EmptyState from '../components/ui/EmptyState.vue'
@@ -7,12 +7,12 @@ import {
   getDrafts,
   getPublished,
   getArchived,
-  duplicateDraft,
   deleteDraft,
   publishDraft,
   archiveDraft,
   restoreDraft,
-  renameDraft,
+  unpublishPost,
+  deletePublished,
 } from '../data/writing.js'
 
 const route = useRoute()
@@ -21,6 +21,7 @@ const activeTab = ref('Drafts')
 const tabs = ['Drafts', 'Published', 'Archived']
 const openMenuId = ref(null)
 const toast = ref('')
+const fallbackThumbnail = 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=900'
 
 const drafts = ref([])
 const published = ref([])
@@ -70,14 +71,6 @@ function closeMenu() {
   openMenuId.value = null
 }
 
-function handleDuplicate(id, event) {
-  event.stopPropagation()
-  duplicateDraft(id)
-  refreshLists()
-  closeMenu()
-  showToast('Draft duplicated')
-}
-
 function handleDelete(id, event) {
   event.stopPropagation()
   if (confirm('Delete this draft? This cannot be undone.')) {
@@ -92,18 +85,6 @@ function handleEdit(id, event) {
   event.stopPropagation()
   closeMenu()
   goToDraft(id)
-}
-
-function handleRename(id, event) {
-  event.stopPropagation()
-  const draft = drafts.value.find(d => d.id === id)
-  const nextTitle = window.prompt('Rename draft', draft?.title ?? '')
-  if (nextTitle?.trim()) {
-    renameDraft(id, nextTitle)
-    refreshLists()
-    showToast('Draft renamed')
-  }
-  closeMenu()
 }
 
 function handlePublish(id, event) {
@@ -135,6 +116,62 @@ function handleRestore(id, event) {
   closeMenu()
 }
 
+function handleCopyLink(post, event) {
+  event.stopPropagation()
+  const url = post.articleId
+    ? `${window.location.origin}/article/${post.articleId}`
+    : `${window.location.origin}/published/${post.id}`
+  navigator.clipboard.writeText(url)
+  showToast('Link copied')
+  closeMenu()
+}
+
+function handleShare(post, event) {
+  event.stopPropagation()
+  const url = post.articleId
+    ? `${window.location.origin}/article/${post.articleId}`
+    : `${window.location.origin}/published/${post.id}`
+  if (navigator.share) {
+    navigator.share({ title: post.title, url })
+  } else {
+    navigator.clipboard.writeText(url)
+    showToast('Link copied')
+  }
+  closeMenu()
+}
+
+function handleEditPublished(post, event) {
+  event.stopPropagation()
+  closeMenu()
+  if (post.draftId) {
+    router.push({ name: 'DraftEdit', params: { id: post.draftId } })
+  } else {
+    goToPublished(post)
+  }
+}
+
+function handleUnpublish(id, event) {
+  event.stopPropagation()
+  const result = unpublishPost(id)
+  if (result.ok) {
+    refreshLists()
+    showToast('Post unpublished')
+  } else {
+    showToast(result.error)
+  }
+  closeMenu()
+}
+
+function handleDeletePublished(id, event) {
+  event.stopPropagation()
+  if (confirm('Delete this published post? This cannot be undone.')) {
+    deletePublished(id)
+    refreshLists()
+    showToast('Published post deleted')
+  }
+  closeMenu()
+}
+
 onMounted(() => {
   refreshLists()
   document.addEventListener('click', closeMenu)
@@ -150,8 +187,8 @@ onUnmounted(() => {
   <div class="max-w-5xl mx-auto px-6 py-8">
     <div class="mb-10 flex items-start justify-between gap-4">
       <div>
-        <h1 class="font-['Playfair_Display'] text-3xl font-extrabold text-[#111418] mb-2">My Writing</h1>
-        <p class="text-gray-500 text-sm">Manage your drafts and published articles.</p>
+        <h1 class="text-3xl font-extrabold text-[#111418] mb-2">My Writing</h1>
+        <p class="font-source-serif text-gray-500 text-sm">Manage your drafts and published articles.</p>
       </div>
       <p v-if="toast" class="text-xs font-semibold text-[#8b1e21] shrink-0">{{ toast }}</p>
     </div>
@@ -169,13 +206,12 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <!-- Drafts -->
     <div v-if="activeTab === 'Drafts'">
       <div class="flex justify-between items-center mb-6">
         <span class="text-sm font-semibold text-gray-700">{{ drafts.length }} Drafts</span>
         <button
           type="button"
-          class="bg-[#111418] text-white px-4 py-2 rounded-md text-xs font-semibold flex items-center gap-2 hover:bg-[#2a3038] transition"
+          class="bg-[#111418] text-white px-4 py-2 text-xs font-semibold flex items-center gap-2 hover:bg-[#2a3038] transition"
           @click="goToNewDraft"
         >
           <Icon icon="lucide:plus" class="w-4 h-4" />
@@ -191,7 +227,7 @@ onUnmounted(() => {
       >
         <button
           type="button"
-          class="inline-flex items-center gap-2 bg-[#111418] text-white px-4 py-2 rounded-md text-xs font-semibold hover:bg-[#2a3038] transition"
+          class="inline-flex items-center gap-2 bg-[#111418] text-white px-4 py-2 text-xs font-semibold hover:bg-[#2a3038] transition"
           @click="goToNewDraft"
         >
           <Icon icon="lucide:plus" class="w-4 h-4" />
@@ -200,14 +236,26 @@ onUnmounted(() => {
       </EmptyState>
 
       <div v-else class="space-y-4">
-        <div
+        <article
           v-for="draft in drafts"
           :key="draft.id"
-          class="border border-[#eae8e4] rounded-lg p-5 hover:border-gray-300 transition group cursor-pointer bg-white relative"
+          class="flex items-start justify-between gap-6 py-8 border-b border-[#eae8e4] group cursor-pointer"
           @click="goToDraft(draft.id)"
         >
-          <div class="flex justify-between items-start mb-2">
-            <h3 class="font-['Playfair_Display'] text-xl font-bold text-[#111418] group-hover:text-[#8b1e21] transition">{{ draft.title }}</h3>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="font-source-serif text-xs text-gray-400">{{ draft.lastModified }}</span>
+            </div>
+            <h3 class="text-xl font-bold text-[#111418] group-hover:text-[#8b1e21] transition line-clamp-2 mb-2">{{ draft.title }}</h3>
+            <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ draft.excerpt }}</p>
+            <div class="flex items-center gap-4 text-xs text-gray-400 font-medium">
+              <span class="flex items-center gap-1.5"><Icon icon="lucide:clock" class="w-3.5 h-3.5" /> Last edited: {{ draft.lastModified }}</span>
+              <span>{{ draft.wordCount }} words</span>
+              <span class="bg-gray-100 px-2 py-0.5 text-gray-600 border border-gray-200">{{ draft.status }}</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-end gap-3 shrink-0">
             <div class="relative">
               <button
                 type="button"
@@ -219,29 +267,24 @@ onUnmounted(() => {
               </button>
               <div
                 v-if="openMenuId === draft.id"
-                class="absolute right-0 top-full mt-1 w-44 bg-white border border-[#eae8e4] rounded-lg shadow-lg z-10 py-1"
+                class="absolute right-0 top-full mt-1 w-44 bg-white border border-[#eae8e4] shadow-lg z-10 py-1"
                 @click.stop
               >
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleEdit(draft.id, $event)">Edit</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleRename(draft.id, $event)">Rename</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleDuplicate(draft.id, $event)">Duplicate</button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-[#8b1e21] hover:bg-[#faf9f5] font-medium" @click="handlePublish(draft.id, $event)">Publish</button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleArchive(draft.id, $event)">Archive</button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" @click="handleDelete(draft.id, $event)">Delete</button>
               </div>
             </div>
+
+            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
+              <img :src="draft.thumbnail || fallbackThumbnail" :alt="draft.title" class="w-full h-full object-cover" />
+            </div>
           </div>
-          <p class="text-sm text-gray-500 line-clamp-1 mb-4">{{ draft.excerpt }}</p>
-          <div class="flex items-center gap-4 text-xs text-gray-400 font-medium">
-            <span class="flex items-center gap-1.5"><Icon icon="lucide:clock" class="w-3.5 h-3.5"/> Last edited: {{ draft.lastModified }}</span>
-            <span>{{ draft.wordCount }} words</span>
-            <span class="bg-gray-100 px-2 py-0.5 rounded text-gray-600 border border-gray-200">{{ draft.status }}</span>
-          </div>
-        </div>
+        </article>
       </div>
     </div>
 
-    <!-- Published -->
     <div v-if="activeTab === 'Published'">
       <div class="mb-6">
         <span class="text-sm font-semibold text-gray-700">{{ published.length }} Published Articles</span>
@@ -254,37 +297,61 @@ onUnmounted(() => {
         description="When you publish a draft, it will appear here with views and engagement stats."
       />
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div
+      <div v-else class="space-y-4">
+        <article
           v-for="post in published"
           :key="post.id"
-          class="border border-[#eae8e4] rounded-lg overflow-hidden hover:border-gray-300 transition bg-white flex flex-col cursor-pointer group"
+          class="flex items-start justify-between gap-6 py-8 border-b border-[#eae8e4] group cursor-pointer"
           @click="goToPublished(post)"
         >
-          <div class="h-40 bg-gray-100 w-full relative">
-            <img :src="post.thumbnail" :alt="post.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
-            <div class="absolute top-3 right-3 bg-white/90 px-2 py-1 rounded text-[10px] font-bold text-[#8b1e21] shadow-sm uppercase tracking-wider">
-              {{ post.status }}
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-3">
+              
+              <span class="text-xs text-gray-600">Published</span>
+              <span class="font-source-serif text-xs text-gray-400">{{ post.datePublished }}</span>
             </div>
-          </div>
-          <div class="p-5 flex-1 flex flex-col">
-            <h3 class="font-['Playfair_Display'] text-lg font-bold text-[#111418] mb-2 leading-tight group-hover:text-[#8b1e21] transition line-clamp-2">
+            <h3 class="text-lg font-bold text-[#111418] mb-2 leading-tight group-hover:text-[#8b1e21] transition line-clamp-2">
               {{ post.title }}
             </h3>
-            <p class="text-xs text-gray-500 line-clamp-2 mb-4 flex-1">{{ post.excerpt }}</p>
-            <div class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-[#eae8e4] mt-auto">
-              <span>{{ post.datePublished }}</span>
-              <div class="flex items-center gap-3">
-                <span class="flex items-center gap-1"><Icon icon="lucide:eye" class="w-3.5 h-3.5"/> {{ post.views }}</span>
-                <span class="flex items-center gap-1"><Icon icon="lucide:heart" class="w-3.5 h-3.5"/> {{ post.claps }}</span>
-              </div>
+            <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ post.excerpt }}</p>
+            <div class="flex items-center gap-4 text-xs text-gray-400">
+              <span>{{ post.readTime }} min read</span>
+              <span class="flex items-center gap-1"><Icon icon="lucide:eye" class="w-3.5 h-3.5" /> {{ post.views }}</span>
+              <span class="flex items-center gap-1"><Icon icon="lucide:heart" class="w-3.5 h-3.5" /> {{ post.claps }}</span>
             </div>
           </div>
-        </div>
+
+          <div class="flex flex-col items-end gap-3 shrink-0">
+            <div class="relative">
+              <button
+                type="button"
+                class="text-gray-400 hover:text-[#111418] p-1"
+                aria-label="Published actions"
+                @click="toggleMenu(post.id, $event)"
+              >
+                <Icon icon="lucide:more-vertical" class="w-5 h-5" />
+              </button>
+              <div
+                v-if="openMenuId === post.id"
+                class="absolute right-0 top-full mt-1 w-44 bg-white border border-[#eae8e4] shadow-lg z-10 py-1"
+                @click.stop
+              >
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleCopyLink(post, $event)">Copy link</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleShare(post, $event)">Share</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleEditPublished(post, $event)">Edit</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleUnpublish(post.id, $event)">Unpublish</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" @click="handleDeletePublished(post.id, $event)">Delete</button>
+              </div>
+            </div>
+
+            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
+              <img :src="post.thumbnail || fallbackThumbnail" :alt="post.title" class="w-full h-full object-cover" />
+            </div>
+          </div>
+        </article>
       </div>
     </div>
 
-    <!-- Archived -->
     <div v-if="activeTab === 'Archived'">
       <div class="mb-6">
         <span class="text-sm font-semibold text-gray-700">{{ archived.length }} Archived Drafts</span>
@@ -298,25 +365,49 @@ onUnmounted(() => {
       />
 
       <div v-else class="space-y-4">
-        <div
+        <article
           v-for="draft in archived"
           :key="draft.id"
-          class="border border-[#eae8e4] rounded-lg p-5 bg-[#faf9f5] flex items-start justify-between gap-4"
+          class="flex items-start justify-between gap-6 py-8 border-b border-[#eae8e4] group"
         >
-          <div>
-            <h3 class="font-['Playfair_Display'] text-lg font-bold text-[#111418] mb-1">{{ draft.title }}</h3>
-            <p class="text-sm text-gray-500 line-clamp-1 mb-2">{{ draft.excerpt }}</p>
-            <span class="text-xs text-gray-400">Archived · {{ draft.lastModified }}</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-3">
+             
+              <span class="text-xs text-gray-600">Archived</span>
+              <span class="font-source-serif text-xs text-gray-400">{{ draft.lastModified }}</span>
+            </div>
+            <h3 class="text-lg font-bold text-[#111418] mb-2 line-clamp-2">{{ draft.title }}</h3>
+            <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ draft.excerpt }}</p>
+            <span class="text-xs text-gray-400">{{ draft.wordCount }} words</span>
           </div>
-          <button
-            type="button"
-            class="shrink-0 text-xs font-semibold text-[#8b1e21] hover:underline"
-            @click="handleRestore(draft.id, $event)"
-          >
-            Restore
-          </button>
-        </div>
+
+          <div class="flex flex-col items-end gap-3 shrink-0">
+            <div class="relative">
+              <button
+                type="button"
+                class="text-gray-400 hover:text-[#111418] p-1"
+                aria-label="Archived actions"
+                @click="toggleMenu(draft.id, $event)"
+              >
+                <Icon icon="lucide:more-vertical" class="w-5 h-5" />
+              </button>
+              <div
+                v-if="openMenuId === draft.id"
+                class="absolute right-0 top-full mt-1 w-44 bg-white border border-[#eae8e4] shadow-lg z-10 py-1"
+                @click.stop
+              >
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleRestore(draft.id, $event)">Restore</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" @click="handleDelete(draft.id, $event)">Delete</button>
+              </div>
+            </div>
+
+            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
+              <img :src="draft.thumbnail || fallbackThumbnail" :alt="draft.title" class="w-full h-full object-cover" />
+            </div>
+          </div>
+        </article>
       </div>
     </div>
   </div>
 </template>
+

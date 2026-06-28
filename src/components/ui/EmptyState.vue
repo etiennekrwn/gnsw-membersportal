@@ -13,8 +13,9 @@ defineProps({
     <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white border border-[#eae8e4] mb-4">
       <Icon :icon="icon" class="w-5 h-5 text-gray-400" />
     </div>
-    <h3 class="font-['Playfair_Display'] text-xl font-bold text-[#111418] mb-2">{{ title }}</h3>
+    <h3 class="font-source-serif text-xl font-bold text-[#111418] mb-2">{{ title }}</h3>
     <p v-if="description" class="text-sm text-gray-500 max-w-md mx-auto mb-6 leading-relaxed">{{ description }}</p>
     <slot />
   </div>
 </template>
+

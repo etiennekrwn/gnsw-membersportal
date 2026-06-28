@@ -86,7 +86,7 @@ watch(() => route.params.id, (id) => loadEvent(id))
             </div>
 
             <!-- Title -->
-            <h1 class="font-['Playfair_Display'] text-2xl md:text-3xl font-bold text-[#111418] leading-snug mb-3">
+            <h1 class="font-source-serif text-2xl md:text-3xl font-bold text-[#111418] leading-snug mb-3">
               {{ event.title }}
             </h1>
 
@@ -168,7 +168,7 @@ watch(() => route.params.id, (id) => loadEvent(id))
                   </div>
                   <div class="flex flex-col justify-center min-w-0">
                     <span class="text-[10px] uppercase tracking-wider font-bold text-[#8b1e21] mb-0.5">{{ item.date }}</span>
-                    <h4 class="font-['Playfair_Display'] text-sm text-[#111418] leading-snug group-hover:text-[#8b1e21] transition-colors line-clamp-2">
+                    <h4 class="font-source-serif text-sm text-[#111418] leading-snug group-hover:text-[#8b1e21] transition-colors line-clamp-2">
                       {{ item.title }}
                     </h4>
                   </div>
@@ -190,3 +190,4 @@ watch(() => route.params.id, (id) => loadEvent(id))
     </template>
   </div>
 </template>
+

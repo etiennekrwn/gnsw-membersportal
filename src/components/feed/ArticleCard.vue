@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import {
@@ -20,6 +20,20 @@ const saved = ref(isArticleSaved(props.article.id))
 const muted = ref(isAuthorMuted(props.article.author.name))
 const followed = ref(isAuthorFollowed(props.article.author.name))
 const actionMessage = ref('')
+const feedDate = computed(() => {
+  const date = new Date(props.article.date)
+
+  if (Number.isNaN(date.getTime())) {
+    return props.article.date
+      .replace(/,?\s*\d{4}/, '')
+      .replace(/^([A-Za-z]+)\s+(\d{1,2})$/, '$2 $1')
+  }
+
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+  })
+})
 
 function openArticle() {
   router.push(`/article/${props.article.id}`)
@@ -64,26 +78,26 @@ function onFollow(event) {
         <span v-if="followed" class="text-[9px] uppercase tracking-wider font-bold text-[#8b1e21]">Following</span>
       </div>
 
-      <h2 class="font-['Playfair_Display'] text-lg font-bold text-[#111418] leading-snug mb-2 group-hover:text-[#8b1e21] transition-colors line-clamp-2">
+      <h2 class="text-xl font-bold text-[#111418] leading-snug mb-2 group-hover:text-[#8b1e21] transition-colors line-clamp-2">
         {{ article.title }}
       </h2>
 
-      <p class="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">
+      <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">
         {{ article.excerpt }}
       </p>
 
-      <div class="flex items-center gap-4 text-xs text-gray-400">
-        <span>{{ article.date }}</span>
-        <span>{{ article.readTime }} min read</span>
-        <span class="flex items-center gap-1">
+      <div class="flex items-center gap-2 sm:gap-4 text-[11px] sm:text-xs text-gray-400 whitespace-nowrap overflow-hidden">
+        <span class="flex items-center gap-1 shrink-0">
           <Icon icon="lucide:thumbs-up" class="w-3.5 h-3.5" />
           {{ article.claps }}
         </span>
-        <span class="flex items-center gap-1">
+        <span class="flex items-center gap-1 shrink-0">
           <Icon icon="lucide:message-circle" class="w-3.5 h-3.5" />
           {{ article.comments }}
         </span>
-        <span v-if="actionMessage" class="text-[#8b1e21] font-semibold">{{ actionMessage }}</span>
+        <span class="shrink-0 ">{{ feedDate }}</span>
+        <span class="shrink-0">{{ article.readTime }} min read</span>
+        <span v-if="actionMessage" class="text-[#8b1e21] font-semibold truncate">{{ actionMessage }}</span>
       </div>
     </div>
 
@@ -128,3 +142,4 @@ function onFollow(event) {
 
   </article>
 </template>
+

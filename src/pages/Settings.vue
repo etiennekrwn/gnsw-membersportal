@@ -3,7 +3,7 @@
 
 <template>
   <div class="max-w-3xl mx-auto px-6 py-8">
-    <h1 class="font-['Playfair_Display'] text-3xl font-extrabold text-[#111418] mb-2">Settings</h1>
+    <h1 class="font-source-serif text-3xl font-extrabold text-[#111418] mb-2">Settings</h1>
     <p class="text-gray-500 text-sm mb-10">Manage notifications, privacy, and account preferences.</p>
 
     <div class="space-y-4">
@@ -22,3 +22,4 @@
     </div>
   </div>
 </template>
+

@@ -44,7 +44,7 @@ function setCategory(category) {
   <div class="max-w-6xl mx-auto px-6 py-8">
     <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
       <div>
-        <h1 class="font-['Playfair_Display'] text-3xl font-extrabold text-[#111418] mb-2">Learning</h1>
+        <h1 class="font-source-serif text-3xl font-extrabold text-[#111418] mb-2">Learning</h1>
         <p class="text-gray-500 text-sm">Expand your skills with specialized courses and masterclasses.</p>
       </div>
 
@@ -93,7 +93,7 @@ function setCategory(category) {
     >
       <div class="md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
         <span class="text-[#8b1e21] text-[10px] font-bold uppercase tracking-[2px] mb-3 block">Resume Learning</span>
-        <h2 class="font-['Playfair_Display'] text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
+        <h2 class="font-source-serif text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
           {{ resumeCourse.title }}
         </h2>
         <p v-if="resumeCourse.currentLesson" class="text-gray-400 text-sm mb-6 leading-relaxed">
@@ -128,7 +128,7 @@ function setCategory(category) {
     <!-- Course Library -->
     <div>
       <div class="flex items-center justify-between mb-6">
-        <h3 class="font-['Playfair_Display'] text-xl font-bold text-[#111418]">
+        <h3 class="font-source-serif text-xl font-bold text-[#111418]">
           Course Library
           <span v-if="activeCategory !== 'All'" class="text-sm font-normal text-gray-400 ml-2">{{ activeCategory }}</span>
         </h3>
@@ -181,7 +181,7 @@ function setCategory(category) {
           </div>
 
           <div class="p-5 flex-1 flex flex-col">
-            <h4 class="font-['Playfair_Display'] text-lg font-bold text-[#111418] mb-2 leading-snug group-hover:text-[#8b1e21] transition line-clamp-2">
+            <h4 class="font-source-serif text-lg font-bold text-[#111418] mb-2 leading-snug group-hover:text-[#8b1e21] transition line-clamp-2">
               {{ course.title }}
             </h4>
             <p class="text-xs text-gray-500 mb-4 flex items-center gap-1.5">
@@ -208,3 +208,4 @@ function setCategory(category) {
     </div>
   </div>
 </template>
+

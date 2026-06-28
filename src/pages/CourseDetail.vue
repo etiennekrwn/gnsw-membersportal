@@ -46,7 +46,7 @@ const continueRoute = computed(() =>
             <span class="text-xs text-gray-400">{{ course.modules }} modules · {{ course.lessons }} lessons</span>
           </div>
 
-          <h1 class="font-['Playfair_Display'] text-3xl md:text-4xl font-extrabold text-[#111418] mb-4 leading-tight">
+          <h1 class="font-source-serif text-3xl md:text-4xl font-extrabold text-[#111418] mb-4 leading-tight">
             {{ course.title }}
           </h1>
           <p class="text-sm text-gray-500 mb-2">Instructor: {{ course.instructor }}</p>
@@ -97,8 +97,9 @@ const continueRoute = computed(() =>
     </template>
 
     <div v-else class="text-center py-24">
-      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] mb-4">Course Not Found</h1>
+      <h1 class="font-source-serif text-3xl font-bold text-[#111418] mb-4">Course Not Found</h1>
       <RouterLink to="/learning" class="text-[#8b1e21] font-semibold hover:underline">Back to Learning</RouterLink>
     </div>
   </div>
 </template>
+

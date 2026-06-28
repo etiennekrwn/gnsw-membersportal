@@ -78,7 +78,7 @@ const handleShare = async () => {
           </div>
         </div>
 
-        <h1 class="font-['Playfair_Display'] text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#111418] leading-tight mb-6 max-w-3xl">
+        <h1 class="font-source-serif text-3xl md:text-4xl lg:text-5xl font-extrabold text-[#111418] leading-tight mb-6 max-w-3xl">
           {{ post.title }}
         </h1>
 
@@ -140,14 +140,14 @@ const handleShare = async () => {
                 v-else-if="block.type === 'pullquote'"
                 class="my-10 pl-6 border-l-4 border-[#8b1e21]"
               >
-                <p class="font-['Playfair_Display'] text-xl md:text-2xl text-[#111418] leading-[1.5] italic font-semibold">
+                <p class="font-source-serif text-xl md:text-2xl text-[#111418] leading-[1.5] italic font-semibold">
                   "{{ block.text }}"
                 </p>
               </blockquote>
 
               <h2
                 v-else-if="block.type === 'heading'"
-                class="font-['Playfair_Display'] text-2xl md:text-3xl font-bold text-[#111418] mt-10 mb-4"
+                class="font-source-serif text-2xl md:text-3xl font-bold text-[#111418] mt-10 mb-4"
               >
                 {{ block.text }}
               </h2>
@@ -198,7 +198,7 @@ const handleShare = async () => {
           <span class="text-[10px] uppercase tracking-[3px] text-[#8b1e21] font-bold block mb-1">
             Continue Reading
           </span>
-          <h2 class="font-['Playfair_Display'] text-2xl font-bold text-[#111418]">
+          <h2 class="font-source-serif text-2xl font-bold text-[#111418]">
             Related Articles
           </h2>
         </div>
@@ -224,7 +224,7 @@ const handleShare = async () => {
               <span class="text-slate-300 text-[10px]">.</span>
               <span class="text-[10px] text-slate-400">{{ item.readTime }} min</span>
             </div>
-            <h3 class="font-['Playfair_Display'] text-lg font-bold text-[#111418] leading-snug mb-2 group-hover:text-[#8b1e21] transition-colors duration-200">
+            <h3 class="font-source-serif text-lg font-bold text-[#111418] leading-snug mb-2 group-hover:text-[#8b1e21] transition-colors duration-200">
               {{ item.title }}
             </h3>
             <p class="text-xs text-slate-500 leading-relaxed flex-grow line-clamp-2">
@@ -237,8 +237,9 @@ const handleShare = async () => {
     </template>
 
     <div v-else class="text-center py-24">
-      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] mb-4">Article Not Found</h1>
+      <h1 class="font-source-serif text-3xl font-bold text-[#111418] mb-4">Article Not Found</h1>
       <RouterLink to="/" class="text-[#8b1e21] font-semibold hover:underline">Return Home</RouterLink>
     </div>
   </div>
 </template>
+

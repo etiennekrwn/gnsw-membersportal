@@ -20,7 +20,7 @@ const post = computed(() => getPublishedById(route.params.id))
       </RouterLink>
 
       <span class="text-[10px] uppercase tracking-[2px] font-bold text-[#8b1e21] mb-3 block">Your Article</span>
-      <h1 class="font-['Playfair_Display'] text-3xl md:text-4xl font-extrabold text-[#111418] mb-4 leading-tight">
+      <h1 class="font-source-serif text-3xl md:text-4xl font-extrabold text-[#111418] mb-4 leading-tight">
         {{ post.title }}
       </h1>
 
@@ -43,8 +43,9 @@ const post = computed(() => getPublishedById(route.params.id))
     </template>
 
     <div v-else class="text-center py-24">
-      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] mb-4">Article Not Found</h1>
+      <h1 class="font-source-serif text-3xl font-bold text-[#111418] mb-4">Article Not Found</h1>
       <RouterLink to="/my-writing" class="text-[#8b1e21] font-semibold hover:underline">Back to My Writing</RouterLink>
     </div>
   </div>
 </template>
+

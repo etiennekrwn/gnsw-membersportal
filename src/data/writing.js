@@ -50,7 +50,18 @@ function formatDate(date = new Date()) {
 }
 
 function wordCount(body = '') {
-  return body.trim() ? body.trim().split(/\s+/).length : 0
+  // body may be HTML from Tiptap; strip tags before counting
+  const text = body.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  return text ? text.split(' ').length : 0
+}
+
+function generateSlug(title = '') {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
 }
 
 function allDraftRecords() {
@@ -86,12 +97,24 @@ export function getPublishedById(id) {
   return getPublished().find(p => p.id === id) ?? null
 }
 
-export function createDraft({ title = 'Untitled Draft', excerpt = '', body = '' } = {}) {
+export function createDraft({
+  title = 'Untitled Draft',
+  excerpt = '',
+  body = '',
+  thumbnail = DEFAULT_THUMBNAIL,
+  slug = '',
+  categories = [],
+  coverImage = null,
+} = {}) {
   const draft = {
     id: `draft-${Date.now()}`,
     title,
-    excerpt: excerpt || body.slice(0, 120),
+    excerpt: excerpt || body.replace(/<[^>]*>/g, ' ').slice(0, 120).trim(),
     body,
+    thumbnail: thumbnail || DEFAULT_THUMBNAIL,
+    slug: slug || generateSlug(title),
+    categories,
+    coverImage: coverImage ?? null,
     lastModified: formatDate(),
     wordCount: wordCount(body),
     status: 'Draft',
@@ -109,8 +132,17 @@ export function updateDraft(id, updates) {
 
   if (updates.body !== undefined) {
     next.wordCount = wordCount(updates.body)
-    next.excerpt = updates.excerpt ?? updates.body.slice(0, 120)
+    if (!updates.excerpt) {
+      next.excerpt = updates.body.replace(/<[^>]*>/g, ' ').slice(0, 120).trim()
+    }
   }
+
+  if (updates.title && !updates.slug) {
+    // only auto-generate slug if one isn't explicitly provided
+    const existing = index >= 0 ? stored[index] : mockDrafts.find(d => d.id === id)
+    if (!existing?.slug) next.slug = generateSlug(updates.title)
+  }
+
   next.lastModified = formatDate()
 
   if (index >= 0) {
@@ -141,6 +173,10 @@ export function duplicateDraft(id) {
     title: `${source.title} (Copy)`,
     excerpt: source.excerpt,
     body: source.body ?? '',
+    thumbnail: source.thumbnail || DEFAULT_THUMBNAIL,
+    slug: '',
+    categories: source.categories ?? [],
+    coverImage: source.coverImage ?? null,
   })
 }
 
@@ -175,15 +211,18 @@ export function publishDraft(id) {
     id: `published-${Date.now()}`,
     draftId: draft.id,
     title,
-    excerpt: draft.excerpt || body.slice(0, 120),
+    excerpt: draft.excerpt || body.replace(/<[^>]*>/g, ' ').slice(0, 120).trim(),
     body,
+    slug: draft.slug || generateSlug(title),
+    categories: draft.categories ?? [],
+    coverImage: draft.coverImage ?? null,
     datePublished: formatDate(),
     readTime: Math.max(1, Math.ceil(wordCount(body) / 200)),
     claps: 0,
     views: 0,
     status: 'Published',
     articleId: null,
-    thumbnail: DEFAULT_THUMBNAIL,
+    thumbnail: draft.thumbnail || DEFAULT_THUMBNAIL,
   }
 
   const stored = loadStoredPublished()
@@ -194,6 +233,39 @@ export function publishDraft(id) {
   saveStoredDrafts(loadStoredDrafts().filter(d => d.id !== id))
 
   return { ok: true, published }
+}
+
+export function unpublishPost(id) {
+  const stored = loadStoredPublished()
+  const post = stored.find(p => p.id === id)
+  if (!post) return { ok: false, error: 'Published post not found.' }
+
+  const draft = {
+    id: `draft-${Date.now()}`,
+    title: post.title,
+    excerpt: post.excerpt || '',
+    body: post.body || '',
+    thumbnail: post.thumbnail || DEFAULT_THUMBNAIL,
+    slug: post.slug || generateSlug(post.title),
+    categories: post.categories ?? [],
+    coverImage: post.coverImage ?? null,
+    lastModified: formatDate(),
+    wordCount: wordCount(post.body || ''),
+    status: 'Draft',
+  }
+
+  const drafts = loadStoredDrafts()
+  drafts.unshift(draft)
+  saveStoredDrafts(drafts)
+
+  saveStoredPublished(stored.filter(p => p.id !== id))
+
+  return { ok: true, draft }
+}
+
+export function deletePublished(id) {
+  const stored = loadStoredPublished()
+  saveStoredPublished(stored.filter(p => p.id !== id))
 }
 
 export function searchWriting(query) {

@@ -17,6 +17,21 @@ import SearchResults from '../pages/SearchResults.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: Login },
+
+  // Editor routes — full screen, no layout wrapper
+  {
+    path: '/my-writing/new',
+    name: 'DraftNew',
+    component: DraftEditor,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/my-writing/:id/edit',
+    name: 'DraftEdit',
+    component: DraftEditor,
+    meta: { requiresAuth: true },
+  },
+
   {
     path: '/',
     component: PortalLayout,
@@ -27,8 +42,6 @@ const routes = [
       { path: 'events/:id', name: 'EventDetail', component: EventDetail },
       { path: 'article/:id', name: 'Article', component: Article },
       { path: 'my-writing', name: 'MyWriting', component: MyWriting },
-      { path: 'my-writing/new', name: 'DraftNew', component: DraftEditor },
-      { path: 'my-writing/:id', name: 'DraftEdit', component: DraftEditor },
       { path: 'published/:id', name: 'PublishedPost', component: PublishedPost },
       { path: 'learning', name: 'Learning', component: Learning },
       { path: 'learning/:courseId', name: 'CourseDetail', component: CourseDetail },
