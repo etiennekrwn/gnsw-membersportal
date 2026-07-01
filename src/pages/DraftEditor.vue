@@ -306,28 +306,72 @@ function saveAndClose() {
   router.push({ name: 'MyWriting' })
 }
 
+// --- Image processing ---
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_IMAGE_SIZE = 2 * 1024 * 1024 // 2MB
+const MAX_IMAGE_WIDTH = 1200
+
+function processImageFile(file) {
+  return new Promise((resolve, reject) => {
+    // Validate file type
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      reject('Only JPEG, PNG, WebP, and GIF images are supported')
+      return
+    }
+
+    // Validate file size
+    if (file.size > MAX_IMAGE_SIZE) {
+      reject('Image must be under 2MB')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new window.Image()
+      img.onload = () => {
+        // Resize if wider than max width
+        if (img.width > MAX_IMAGE_WIDTH) {
+          const ratio = MAX_IMAGE_WIDTH / img.width
+          const canvas = document.createElement('canvas')
+          canvas.width = MAX_IMAGE_WIDTH
+          canvas.height = Math.round(img.height * ratio)
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          resolve(canvas.toDataURL('image/jpeg', 0.85))
+        } else {
+          resolve(e.target.result)
+        }
+      }
+      img.onerror = () => reject('Failed to process image')
+      img.src = e.target.result
+    }
+    reader.onerror = () => reject('Failed to read file')
+    reader.readAsDataURL(file)
+  })
+}
+
 // --- Cover image ---
 function handleFileSelect(e) {
   const file = e.target.files?.[0]
-  if (file) readImageFile(file)
+  if (file) handleCoverImage(file)
 }
 
 function handleDrop(e) {
   isDraggingOver.value = false
   const file = e.dataTransfer?.files?.[0]
-  if (file && file.type.startsWith('image/')) readImageFile(file)
+  if (file && file.type.startsWith('image/')) handleCoverImage(file)
 }
 
-function readImageFile(file) {
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const base64 = e.target.result
+async function handleCoverImage(file) {
+  try {
+    const base64 = await processImageFile(file)
     coverImage.value = base64
     coverImagePreview.value = base64
     clearFieldError('coverImage')
     scheduleSave()
+  } catch (err) {
+    showToastMessage(err)
   }
-  reader.readAsDataURL(file)
 }
 
 function removeCoverImage() {
@@ -369,14 +413,15 @@ function insertImage() {
   imageInput.value?.click()
 }
 
-function handleImageInsert(e) {
+async function handleImageInsert(e) {
   const file = e.target.files?.[0]
-  if (file && file.type.startsWith('image/')) {
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      editor.value?.chain().focus().setImage({ src: ev.target.result }).run()
+  if (file) {
+    try {
+      const base64 = await processImageFile(file)
+      editor.value?.chain().focus().setImage({ src: base64 }).run()
+    } catch (err) {
+      showToastMessage(err)
     }
-    reader.readAsDataURL(file)
   }
   e.target.value = ''
 }
