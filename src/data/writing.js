@@ -104,6 +104,7 @@ export function createDraft({
   thumbnail = DEFAULT_THUMBNAIL,
   slug = '',
   categories = [],
+  tags = [],
   coverImage = null,
 } = {}) {
   const draft = {
@@ -114,6 +115,7 @@ export function createDraft({
     thumbnail: thumbnail || DEFAULT_THUMBNAIL,
     slug: slug || generateSlug(title),
     categories,
+    tags,
     coverImage: coverImage ?? null,
     lastModified: formatDate(),
     wordCount: wordCount(body),
@@ -215,6 +217,7 @@ export function publishDraft(id) {
     body,
     slug: draft.slug || generateSlug(title),
     categories: draft.categories ?? [],
+    tags: draft.tags ?? [],
     coverImage: draft.coverImage ?? null,
     datePublished: formatDate(),
     readTime: Math.max(1, Math.ceil(wordCount(body) / 200)),

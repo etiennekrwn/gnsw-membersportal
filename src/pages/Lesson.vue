@@ -33,7 +33,7 @@ const lessonTitle = computed(() => {
         </div>
       </div>
 
-      <h1 class="font-source-serif text-2xl md:text-3xl font-bold text-[#111418] mb-3">{{ lessonTitle }}</h1>
+      <h1 class="text-2xl md:text-3xl font-bold text-[#111418] mb-3">{{ lessonTitle }}</h1>
       <p class="text-sm text-gray-500 mb-8">
         This lesson view is a placeholder. Full video playback, notes, and quizzes will be added in a later phase.
       </p>
@@ -55,7 +55,7 @@ const lessonTitle = computed(() => {
     </template>
 
     <div v-else class="text-center py-24">
-      <h1 class="font-source-serif text-3xl font-bold text-[#111418] mb-4">Lesson Not Found</h1>
+      <h1 class="text-3xl font-bold text-[#111418] mb-4">Lesson Not Found</h1>
       <RouterLink to="/learning" class="text-[#8b1e21] font-semibold hover:underline">Back to Learning</RouterLink>
     </div>
   </div>

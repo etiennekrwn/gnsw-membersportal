@@ -10,6 +10,7 @@ import Learning from '../pages/Learning.vue'
 import CourseDetail from '../pages/CourseDetail.vue'
 import Lesson from '../pages/Lesson.vue'
 import DraftEditor from '../pages/DraftEditor.vue'
+import DraftPreview from '../pages/DraftPreview.vue'
 import Profile from '../pages/Profile.vue'
 import Settings from '../pages/Settings.vue'
 import PublishedPost from '../pages/PublishedPost.vue'
@@ -29,6 +30,12 @@ const routes = [
     path: '/my-writing/:id/edit',
     name: 'DraftEdit',
     component: DraftEditor,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/my-writing/:id/preview',
+    name: 'DraftPreview',
+    component: DraftPreview,
     meta: { requiresAuth: true },
   },
 

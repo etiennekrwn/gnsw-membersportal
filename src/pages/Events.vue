@@ -35,11 +35,11 @@ function setFilter(tab) {
 
 <template>
   <div class="max-w-6xl mx-auto px-6 py-8">
-    <div class=" mx-auto px-8">
+    <div class=" mx-auto ">
 
       <!-- Page title -->
-      <div class="pt-10 pb-6">
-        <h1 class="font-source-serif text-3xl font-bold text-[#111418]">Events</h1>
+      <div class=" mb-10">
+        <h1 class="text-3xl font-bold text-[#111418]">Events</h1>
         <p class="text-sm text-gray-400 mt-1">Summits, workshops, masterclasses and public lectures from the Guild.</p>
       </div>
 
@@ -97,7 +97,7 @@ function setFilter(tab) {
                 {{ event.type }}
               </span>
             </div>
-            <h3 class="font-source-serif text-base font-bold text-[#111418] leading-snug group-hover:text-[#8b1e21] transition-colors line-clamp-1 mb-1">
+            <h3 class="text-base font-bold text-[#111418] leading-snug group-hover:text-[#8b1e21] transition-colors line-clamp-1 mb-1">
               {{ event.title }}
             </h3>
             <div class="flex items-center gap-1.5 text-xs text-gray-400">

@@ -184,11 +184,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-6 py-8">
+  <div class="max-w-6xl mx-auto px-6 py-8">
     <div class="mb-10 flex items-start justify-between gap-4">
       <div>
         <h1 class="text-3xl font-extrabold text-[#111418] mb-2">My Writing</h1>
-        <p class="font-source-serif text-gray-500 text-sm">Manage your drafts and published articles.</p>
+        <p class="text-gray-500 text-sm">Manage your drafts and published articles.</p>
       </div>
       <p v-if="toast" class="text-xs font-semibold text-[#8b1e21] shrink-0">{{ toast }}</p>
     </div>
@@ -244,10 +244,10 @@ onUnmounted(() => {
         >
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-3">
-              <span class="font-source-serif text-xs text-gray-400">{{ draft.lastModified }}</span>
+              <span class="text-xs text-gray-400">{{ draft.lastModified }}</span>
             </div>
             <h3 class="text-xl font-bold text-[#111418] group-hover:text-[#8b1e21] transition line-clamp-2 mb-2">{{ draft.title }}</h3>
-            <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ draft.excerpt }}</p>
+            <p class="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ draft.excerpt }}</p>
             <div class="flex items-center gap-4 text-xs text-gray-400 font-medium">
               <span class="flex items-center gap-1.5"><Icon icon="lucide:clock" class="w-3.5 h-3.5" /> Last edited: {{ draft.lastModified }}</span>
               <span>{{ draft.wordCount }} words</span>
@@ -308,12 +308,12 @@ onUnmounted(() => {
             <div class="flex items-center gap-2 mb-3">
               
               <span class="text-xs text-gray-600">Published</span>
-              <span class="font-source-serif text-xs text-gray-400">{{ post.datePublished }}</span>
+              <span class="text-xs text-gray-400">{{ post.datePublished }}</span>
             </div>
             <h3 class="text-lg font-bold text-[#111418] mb-2 leading-tight group-hover:text-[#8b1e21] transition line-clamp-2">
               {{ post.title }}
             </h3>
-            <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ post.excerpt }}</p>
+            <p class="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ post.excerpt }}</p>
             <div class="flex items-center gap-4 text-xs text-gray-400">
               <span>{{ post.readTime }} min read</span>
               <span class="flex items-center gap-1"><Icon icon="lucide:eye" class="w-3.5 h-3.5" /> {{ post.views }}</span>
@@ -374,10 +374,10 @@ onUnmounted(() => {
             <div class="flex items-center gap-2 mb-3">
              
               <span class="text-xs text-gray-600">Archived</span>
-              <span class="font-source-serif text-xs text-gray-400">{{ draft.lastModified }}</span>
+              <span class="text-xs text-gray-400">{{ draft.lastModified }}</span>
             </div>
             <h3 class="text-lg font-bold text-[#111418] mb-2 line-clamp-2">{{ draft.title }}</h3>
-            <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ draft.excerpt }}</p>
+            <p class="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ draft.excerpt }}</p>
             <span class="text-xs text-gray-400">{{ draft.wordCount }} words</span>
           </div>
 

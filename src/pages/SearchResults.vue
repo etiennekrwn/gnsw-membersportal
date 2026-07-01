@@ -14,7 +14,7 @@ const hasResults = computed(() => hasSearchResults(results.value))
 
 <template>
   <div class="max-w-4xl mx-auto px-6 py-8">
-    <h1 class="font-source-serif text-3xl font-extrabold text-[#111418] mb-2">Search</h1>
+    <h1 class="text-3xl font-extrabold text-[#111418] mb-2">Search</h1>
     <p v-if="query" class="text-gray-500 text-sm mb-8">
       Results for <span class="font-semibold text-[#111418]">"{{ query }}"</span>
     </p>

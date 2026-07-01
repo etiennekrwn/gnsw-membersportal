@@ -6,7 +6,7 @@ const currentUser = inject('currentUser')
 
 <template>
   <div class="max-w-3xl mx-auto px-6 py-8">
-    <h1 class="font-source-serif text-3xl font-extrabold text-[#111418] mb-2">Profile</h1>
+    <h1 class="text-3xl font-extrabold text-[#111418] mb-2">Profile</h1>
     <p class="text-gray-500 text-sm mb-10">Your Guild membership and public writer profile.</p>
 
     <div class="border border-[#eae8e4] rounded-xl p-6 bg-white flex items-start gap-5">

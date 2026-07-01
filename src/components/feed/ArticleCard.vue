@@ -51,12 +51,7 @@ function onSave(event) {
   flash(saved.value ? 'Saved' : 'Removed from saved')
 }
 
-function onMute(event) {
-  event.preventDefault()
-  event.stopPropagation()
-  muted.value = toggleMuteAuthor(props.article.author.name)
-  flash(muted.value ? 'Author muted' : 'Author unmuted')
-}
+
 
 function onFollow(event) {
   event.preventDefault()
@@ -67,7 +62,7 @@ function onFollow(event) {
 </script>
 
 <template>
-  <article class="flex items-start justify-between gap-6 py-8 border-b border-[#eae8e4] group">
+  <article class="flex items-start justify-between py-8 border-b gap-3 border-[#eae8e4] group">
 
     <div class="flex-1 min-w-0 cursor-pointer" @click="openArticle">
       <div class="flex items-center gap-2 mb-3">
@@ -82,17 +77,17 @@ function onFollow(event) {
         {{ article.title }}
       </h2>
 
-      <p class="font-source-serif text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">
+      <p class="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">
         {{ article.excerpt }}
       </p>
 
-      <div class="flex items-center gap-2 sm:gap-4 text-[11px] sm:text-xs text-gray-400 whitespace-nowrap overflow-hidden">
+      <div class="flex items-center gap-4 sm:gap-4 text-[11px] sm:text-xs text-gray-400 whitespace-nowrap overflow-hidden">
         <span class="flex items-center gap-1 shrink-0">
-          <Icon icon="lucide:thumbs-up" class="w-3.5 h-3.5" />
+          <Icon icon="mdi:thumb-up" class="w-3.5 h-3.5" />
           {{ article.claps }}
         </span>
         <span class="flex items-center gap-1 shrink-0">
-          <Icon icon="lucide:message-circle" class="w-3.5 h-3.5" />
+          <Icon icon="mdi:comment-text" class="w-3.5 h-3.5" />
           {{ article.comments }}
         </span>
         <span class="shrink-0 ">{{ feedDate }}</span>
@@ -121,19 +116,11 @@ function onFollow(event) {
         >
           <Icon :icon="followed ? 'lucide:user-check' : 'lucide:user-plus'" class="w-4 h-4" />
         </button>
-        <button
-          type="button"
-          class="p-2 rounded-full text-gray-400 hover:text-[#111418] hover:bg-[#faf9f5] transition"
-          :class="{ 'text-[#111418]': muted }"
-          :aria-label="muted ? 'Unmute author' : 'Mute author'"
-          @click="onMute"
-        >
-          <Icon :icon="muted ? 'lucide:volume-x' : 'lucide:volume-2'" class="w-4 h-4" />
-        </button>
+       
       </div>
 
       <div
-        class="w-24 h-24 sm:w-28 sm:h-28 rounded overflow-hidden bg-gray-100 cursor-pointer"
+        class="w-20 h-20 sm:w-28 sm:h-28 rounded overflow-hidden bg-gray-100 cursor-pointer"
         @click="openArticle"
       >
         <img :src="article.thumbnail" :alt="article.title" class="w-full h-full object-cover" />

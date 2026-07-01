@@ -14,7 +14,7 @@
         </button>
 
         <!-- Logo -->
-        <RouterLink to="/" class="font-['Playfair_Display'] text-3xl font-extrabold text-[#111418] no-underline tracking-tight">
+        <RouterLink to="/" class="font-['Playfair_Display'] text-3xl font-extrabold text-[#111418] no-underline select-none tracking-tight">
           GNSW<span class="text-4xl">.</span>
         </RouterLink>
 

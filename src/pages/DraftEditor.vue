@@ -28,13 +28,12 @@ const isNew = computed(() => route.name === 'DraftNew')
 // --- Fields ---
 const title = ref('')
 const excerpt = ref('')
-const slug = ref('')
+const tags = ref([])
 const categories = ref([])
 const coverImage = ref(null) // base64 or null
 const coverImagePreview = ref(null)
 const saved = ref(true)
 const saveMessage = ref('')
-const publishError = ref('')
 const showCloseModal = ref(false)
 const isDraggingOver = ref(false)
 
@@ -45,30 +44,55 @@ const CATEGORY_OPTIONS = [
 ]
 const categoryMenuOpen = ref(false)
 
+// Tags input
+const tagInput = ref('')
+const TAGS_MAX = 5
+
+function addTag() {
+  const val = tagInput.value.trim().toLowerCase().replace(/\s+/g, '-')
+  if (!val) return
+  if (tags.value.includes(val)) { tagInput.value = ''; return }
+  if (tags.value.length >= TAGS_MAX) return
+  tags.value.push(val)
+  tagInput.value = ''
+  scheduleSave()
+}
+
+function removeTag(tag) {
+  tags.value = tags.value.filter(t => t !== tag)
+  scheduleSave()
+}
+
 let saveTimer = null
 let lastSavedTitle = ''
 let lastSavedBody = ''
 let lastSavedExcerpt = ''
-let lastSavedSlug = ''
+let lastSavedTags = ''
 let lastSavedCategories = ''
 let lastSavedCoverImage = null
+let draftId = ref(null) // the actual saved draft id (may differ from route param for new drafts)
 
 const isDirty = computed(() => {
   return (
     title.value !== lastSavedTitle ||
     (editor.value?.getHTML() ?? '') !== lastSavedBody ||
     excerpt.value !== lastSavedExcerpt ||
-    slug.value !== lastSavedSlug ||
+    JSON.stringify(tags.value) !== lastSavedTags ||
     JSON.stringify(categories.value) !== lastSavedCategories ||
     coverImage.value !== lastSavedCoverImage
   )
+})
+
+const hasContent = computed(() => {
+  return title.value.trim().length > 0 ||
+    (editor.value?.getText() ?? '').trim().length > 0
 })
 
 function syncSavedSnapshot() {
   lastSavedTitle = title.value
   lastSavedBody = editor.value?.getHTML() ?? ''
   lastSavedExcerpt = excerpt.value
-  lastSavedSlug = slug.value
+  lastSavedTags = JSON.stringify(tags.value)
   lastSavedCategories = JSON.stringify(categories.value)
   lastSavedCoverImage = coverImage.value
   saved.value = true
@@ -94,21 +118,21 @@ const editor = useEditor({
   },
   editorProps: {
     attributes: {
-      class: 'prose prose-lg max-w-none focus:outline-none min-h-[320px] font-source-serif text-[#111418]',
+      class: 'prose prose-lg max-w-none focus:outline-none min-h-[320px] text-[#111418]',
     },
   },
 })
 
 // --- Load draft ---
 function loadDraft() {
-  publishError.value = ''
   if (isNew.value) {
     title.value = ''
     excerpt.value = ''
-    slug.value = ''
+    tags.value = []
     categories.value = []
     coverImage.value = null
     coverImagePreview.value = null
+    draftId.value = null
     editor.value?.commands.setContent('')
     syncSavedSnapshot()
     return
@@ -120,59 +144,55 @@ function loadDraft() {
   }
   title.value = draft.title
   excerpt.value = draft.excerpt ?? ''
-  slug.value = draft.slug ?? ''
+  tags.value = draft.tags ?? []
   categories.value = draft.categories ?? []
   coverImage.value = draft.coverImage ?? null
   coverImagePreview.value = draft.coverImage ?? null
+  draftId.value = draft.id
   editor.value?.commands.setContent(draft.body ?? '')
   syncSavedSnapshot()
 }
 
-// --- Auto-slug from title ---
-watch(title, (val) => {
-  if (!slug.value || slug.value === autoSlug(lastSavedTitle)) {
-    slug.value = autoSlug(val)
-  }
-})
-
-function autoSlug(val) {
-  return val.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-')
-}
-
 // --- Save logic ---
 function scheduleSave() {
-  if (isNew.value) { saved.value = false; return }
   saved.value = false
   clearTimeout(saveTimer)
   saveTimer = setTimeout(saveNow, 800)
 }
 
 function saveNow() {
-  publishError.value = ''
   const body = editor.value?.getHTML() ?? ''
 
-  if (isNew.value) {
-    if (!title.value.trim() && !body.replace(/<[^>]*>/g, '').trim()) return
+  // If this is a new draft and no content yet, don't save
+  if (!draftId.value && !hasContent.value) {
+    saved.value = true
+    return
+  }
+
+  // If no draft exists yet, create one first
+  if (!draftId.value) {
     const draft = createDraft({
       title: title.value || 'Untitled Draft',
       body,
       excerpt: excerpt.value,
-      slug: slug.value,
+      tags: tags.value,
       categories: categories.value,
       coverImage: coverImage.value,
     })
+    draftId.value = draft.id
     syncSavedSnapshot()
     saveMessage.value = 'Draft saved'
+    // Replace the route so future autosaves hit the correct id
     router.replace({ name: 'DraftEdit', params: { id: draft.id } })
     setTimeout(() => { saveMessage.value = '' }, 2000)
     return
   }
 
-  updateDraft(route.params.id, {
+  updateDraft(draftId.value, {
     title: title.value,
     body,
     excerpt: excerpt.value,
-    slug: slug.value,
+    tags: tags.value,
     categories: categories.value,
     coverImage: coverImage.value,
   })
@@ -182,28 +202,26 @@ function saveNow() {
 }
 
 function handlePublish() {
-  publishError.value = ''
-  if (isNew.value) {
-    publishError.value = 'Save the draft before publishing.'
+  // If no draft exists yet and there's content, save first then navigate to preview
+  if (!draftId.value) {
+    if (!hasContent.value) return // nothing to publish
+    saveNow()
+    // saveNow will replace the route to DraftEdit, then we navigate to preview
+    // Use a small delay to let the route replace complete
+    setTimeout(() => {
+      if (draftId.value) {
+        router.push({ name: 'DraftPreview', params: { id: draftId.value } })
+      }
+    }, 100)
     return
   }
-  if (isDirty.value) {
-    updateDraft(route.params.id, {
-      title: title.value,
-      body: editor.value?.getHTML() ?? '',
-      excerpt: excerpt.value,
-      slug: slug.value,
-      categories: categories.value,
-      coverImage: coverImage.value,
-    })
-    syncSavedSnapshot()
+
+  // Auto-save any pending changes
+  if (!saved.value) {
+    saveNow()
   }
-  const result = publishDraft(route.params.id)
-  if (!result.ok) {
-    publishError.value = result.error
-    return
-  }
-  router.push({ name: 'MyWriting', query: { tab: 'Published', published: result.published.id } })
+
+  router.push({ name: 'DraftPreview', params: { id: draftId.value } })
 }
 
 // --- Close modal ---
@@ -281,6 +299,24 @@ function insertTable() {
   editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
 }
 
+const imageInput = ref(null)
+
+function insertImage() {
+  imageInput.value?.click()
+}
+
+function handleImageInsert(e) {
+  const file = e.target.files?.[0]
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      editor.value?.chain().focus().setImage({ src: ev.target.result }).run()
+    }
+    reader.readAsDataURL(file)
+  }
+  e.target.value = ''
+}
+
 // --- Lifecycle ---
 onMounted(() => {
   loadDraft()
@@ -302,39 +338,30 @@ onBeforeRouteLeave((_to, _from, next) => {
 
 <template>
   <!-- Top bar -->
-  <div class="fixed top-0 inset-x-0 z-30 bg-white border-b border-[#eae8e4] flex items-center justify-between px-6 h-14">
-    <span class="font-extrabold text-[#111418] tracking-tight text-lg select-none">GNSW</span>
+  <div class="max-w-7xl m-auto fixed top-0 inset-x-0 z-30 bg-white flex items-center justify-between px-6 h-14">
+    <span class="font-['Playfair_Display'] font-extrabold text-[#111418] tracking-tight text-3xl select-none">GNSW.</span>
 
     <div class="flex items-center gap-2">
       <!-- Save status -->
       <span v-if="!saveMessage" class="text-xs text-gray-400 hidden sm:block">
-        {{ isNew ? 'Unsaved draft' : saved ? 'All changes saved' : 'Saving…' }}
+        {{ saved ? 'All changes saved' : 'Saving…' }}
       </span>
       <span v-if="saveMessage" class="text-xs font-semibold text-[#8b1e21]">{{ saveMessage }}</span>
 
-      <!-- Save to draft -->
+      <!-- Publish (navigates to preview) -->
       <button
         type="button"
-        class="border border-[#eae8e4] text-[#111418] px-4 py-1.5 text-xs font-semibold hover:bg-gray-50 transition"
-        @click="saveNow"
-      >
-        Save to draft
-      </button>
-
-      <!-- Publish -->
-      <button
-        type="button"
-        class="bg-[#8b1e21] text-white px-4 py-1.5 text-xs font-semibold hover:bg-[#6d1819] transition flex items-center gap-1.5"
+        class="bg-[#8b1e21] text-white px-3 sm:px-4 py-2 sm:py-1.5 text-xs font-semibold hover:bg-[#6d1819] transition flex items-center gap-1.5"
         @click="handlePublish"
       >
         <Icon icon="lucide:send" class="w-3.5 h-3.5" />
-        Publish
+        <span class="hidden sm:inline">Publish</span>
       </button>
 
       <!-- Close -->
       <button
         type="button"
-        class="ml-1 p-1.5 text-gray-400 hover:text-[#111418] transition"
+        class="ml-1 p-2 sm:p-1.5 text-gray-400 hover:text-[#111418] transition"
         @click="handleClose"
         title="Close editor"
       >
@@ -343,35 +370,29 @@ onBeforeRouteLeave((_to, _from, next) => {
     </div>
   </div>
 
-  <!-- Publish error banner -->
-  <div
-    v-if="publishError"
-    class="fixed top-14 inset-x-0 z-20 bg-red-50 border-b border-red-200 text-red-700 text-xs font-medium px-6 py-2 flex items-center gap-2"
-  >
-    <Icon icon="lucide:alert-circle" class="w-3.5 h-3.5 flex-shrink-0" />
-    {{ publishError }}
-    <button class="ml-auto text-red-400 hover:text-red-600" @click="publishError = ''">
-      <Icon icon="lucide:x" class="w-3.5 h-3.5" />
-    </button>
-  </div>
-
   <!-- Main layout -->
-  <div class="pt-14 min-h-screen bg-white flex flex-col lg:flex-row">
+  <div class="max-w-7xl m-auto px-6 py-8 pt-14 min-h-screen gap-4 bg-white flex flex-col lg:flex-row">
 
     <!-- Editor column -->
-    <div class="flex-1 min-w-0 px-6 sm:px-10 lg:px-16 xl:px-24 py-10 lg:py-14">
+    <div class="flex-1 min-w-0 py-10 lg:py-14">
 
-      <!-- Title -->
+      <!-- Title label -->
+      <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-2">Title</p>
+
+      <!-- Title input -->
       <input
         v-model="title"
         type="text"
-        placeholder="Title"
-        class="w-full text-3xl sm:text-4xl xl:text-5xl font-extrabold text-[#111418] placeholder-gray-200 border-none outline-none mb-8 bg-transparent leading-tight"
+        placeholder="Name your blog"
+        class="draft-title-input w-full text-[1rem] font-normal text-[#111418] placeholder-gray-300 border border-gray-300 outline-none mb-6 bg-transparent leading-tight px-3 py-2 focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] transition"
         @input="scheduleSave"
       />
 
+      <!-- Content label -->
+      <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-2">Content</p>
+
       <!-- Toolbar -->
-      <div class="flex flex-wrap items-center gap-0.5 mb-4 border border-[#eae8e4] bg-[#fafaf9] px-2 py-1.5">
+      <div class="flex flex-wrap items-center gap-0.5 border border-gray-300 border-b-0 bg-[#fafaf9] px-2 py-1.5 sticky top-14 z-10 -mx-6 sm:-mx-0">
 
         <!-- Text style -->
         <button
@@ -402,7 +423,7 @@ onBeforeRouteLeave((_to, _from, next) => {
           @click="editor?.chain().focus().toggleHighlight().run()"
         ><Icon icon="lucide:highlighter" class="w-3.5 h-3.5" /></button>
 
-        <div class="w-px h-4 bg-[#eae8e4] mx-1" />
+        <div class="w-px h-4 bg-gray-300 mx-1" />
 
         <!-- Headings -->
         <button
@@ -419,7 +440,7 @@ onBeforeRouteLeave((_to, _from, next) => {
           @click="editor?.chain().focus().toggleHeading({ level: 3 }).run()"
         >H3</button>
 
-        <div class="w-px h-4 bg-[#eae8e4] mx-1" />
+        <div class="w-px h-4 bg-gray-300 mx-1" />
 
         <!-- Link -->
         <button
@@ -437,23 +458,15 @@ onBeforeRouteLeave((_to, _from, next) => {
           @click="editor?.chain().focus().toggleBlockquote().run()"
         ><Icon icon="lucide:quote" class="w-3.5 h-3.5" /></button>
 
-        <!-- Inline code -->
+        <!-- Image -->
         <button
           class="toolbar-btn"
-          :class="{ 'toolbar-btn--active': editor?.isActive('code') }"
-          title="Inline code"
-          @click="editor?.chain().focus().toggleCode().run()"
-        ><Icon icon="lucide:code" class="w-3.5 h-3.5" /></button>
+          :class="{ 'toolbar-btn--active': editor?.isActive('image') }"
+          title="Image"
+          @click="insertImage"
+        ><Icon icon="lucide:image" class="w-3.5 h-3.5" /></button>
 
-        <!-- Code block -->
-        <button
-          class="toolbar-btn"
-          :class="{ 'toolbar-btn--active': editor?.isActive('codeBlock') }"
-          title="Code block"
-          @click="editor?.chain().focus().toggleCodeBlock().run()"
-        ><Icon icon="lucide:terminal" class="w-3.5 h-3.5" /></button>
-
-        <div class="w-px h-4 bg-[#eae8e4] mx-1" />
+        <div class="w-px h-4 bg-gray-300 mx-1" />
 
         <!-- Lists -->
         <button
@@ -470,9 +483,7 @@ onBeforeRouteLeave((_to, _from, next) => {
           @click="editor?.chain().focus().toggleOrderedList().run()"
         ><Icon icon="lucide:list-ordered" class="w-3.5 h-3.5" /></button>
 
-        <div class="w-px h-4 bg-[#eae8e4] mx-1" />
-
-       
+        <div class="w-px h-4 bg-gray-300 mx-1" />
 
         <!-- Horizontal rule -->
         <button
@@ -481,7 +492,7 @@ onBeforeRouteLeave((_to, _from, next) => {
           @click="editor?.chain().focus().setHorizontalRule().run()"
         ><Icon icon="lucide:minus" class="w-3.5 h-3.5" /></button>
 
-        <div class="w-px h-4 bg-[#eae8e4] mx-1" />
+        <div class="w-px h-4 bg-gray-300 mx-1" />
 
         <!-- Undo / Redo -->
         <button
@@ -497,42 +508,51 @@ onBeforeRouteLeave((_to, _from, next) => {
         ><Icon icon="lucide:redo-2" class="w-3.5 h-3.5" /></button>
       </div>
 
+      <!-- Hidden file input for image upload -->
+      <input ref="imageInput" type="file" accept="image/*" class="sr-only" @change="handleImageInsert" />
+
       <!-- Tiptap content area -->
-      <EditorContent :editor="editor" class="editor-body" />
+      <EditorContent :editor="editor" class="editor-body border border-gray-300 px-4 py-4" />
     </div>
 
     <!-- Sidebar -->
-    <aside class="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-[#eae8e4] bg-[#fafaf9] px-6 py-8 lg:py-14 flex-shrink-0 space-y-7">
+    <aside class="w-full lg:w-72 xl:w-80  py-8 lg:py-14 space-y-6">
 
-      <!-- Cover image -->
+      <!-- Tags (SEO) -->
       <div>
-        <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-3">Cover Image</p>
+        <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-2">Tags</p>
 
-        <div v-if="coverImagePreview" class="relative">
-          <img :src="coverImagePreview" alt="Cover" class="w-full aspect-video object-cover border border-[#eae8e4]" />
-          <button
-            class="absolute top-2 right-2 bg-white border border-[#eae8e4] p-1 hover:bg-gray-100 transition"
-            title="Remove image"
-            @click="removeCoverImage"
+        <!-- Selected tags -->
+        <div v-if="tags.length" class="flex flex-wrap gap-1.5 mb-2">
+          <span
+            v-for="tag in tags"
+            :key="tag"
+            class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 text-[11px] font-medium px-2 py-0.5"
           >
-            <Icon icon="lucide:x" class="w-3 h-3 text-gray-500" />
-          </button>
+            #{{ tag }}
+            <button @click="removeTag(tag)"><Icon icon="lucide:x" class="w-2.5 h-2.5" /></button>
+          </span>
         </div>
 
-        <label
-          v-else
-          class="block border-2 border-dashed transition cursor-pointer"
-          :class="isDraggingOver ? 'border-[#8b1e21] bg-red-50' : 'border-[#eae8e4] hover:border-gray-300'"
-          @dragover.prevent="isDraggingOver = true"
-          @dragleave="isDraggingOver = false"
-          @drop.prevent="handleDrop"
-        >
-          <input type="file" accept="image/*" class="sr-only" @change="handleFileSelect" />
-          <div class="flex flex-col items-center justify-center gap-2 py-8 text-gray-400">
-            <Icon icon="lucide:image-plus" class="w-6 h-6" />
-            <span class="text-xs text-center">Drag & drop or <span class="text-[#8b1e21] font-semibold">browse</span></span>
-          </div>
-        </label>
+        <!-- Tag input -->
+        <div class="flex gap-1">
+          <input
+            v-model="tagInput"
+            type="text"
+            placeholder="Add a tag…"
+            maxlength="30"
+            class="flex-1 border border-gray-300 bg-white px-3 py-2 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] transition"
+            @keydown.enter.prevent="addTag"
+            @keydown.,.prevent="addTag"
+          />
+          <button
+            type="button"
+            class="border border-gray-300 px-2 text-gray-500 hover:bg-gray-50 transition text-xs font-semibold disabled:opacity-30"
+            :disabled="!tagInput.trim() || tags.length >= TAGS_MAX"
+            @click="addTag"
+          >Add</button>
+        </div>
+        <p class="text-[10px] text-gray-400 mt-1">{{ tags.length }}/{{ TAGS_MAX }} tags</p>
       </div>
 
       <!-- Excerpt -->
@@ -542,19 +562,7 @@ onBeforeRouteLeave((_to, _from, next) => {
           v-model="excerpt"
           rows="3"
           placeholder="A short summary of this piece…"
-          class="w-full border border-[#eae8e4] bg-white px-3 py-2.5 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] resize-none"
-          @input="scheduleSave"
-        />
-      </div>
-
-      <!-- Slug -->
-      <div>
-        <label class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-2 block">Slug</label>
-        <input
-          v-model="slug"
-          type="text"
-          placeholder="url-friendly-title"
-          class="w-full border border-[#eae8e4] bg-white px-3 py-2.5 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] font-mono"
+          class="w-full border border-gray-300 bg-white px-3 py-2.5 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] resize-none transition"
           @input="scheduleSave"
         />
       </div>
@@ -579,7 +587,7 @@ onBeforeRouteLeave((_to, _from, next) => {
         <div class="relative">
           <button
             type="button"
-            class="w-full flex items-center justify-between border border-[#eae8e4] bg-white px-3 py-2.5 text-sm text-gray-400 hover:border-gray-300 transition"
+            class="w-full flex items-center justify-between border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-400 hover:border-gray-400 transition"
             @click="categoryMenuOpen = !categoryMenuOpen"
           >
             <span>{{ categories.length ? 'Add more…' : 'Select categories…' }}</span>
@@ -588,7 +596,7 @@ onBeforeRouteLeave((_to, _from, next) => {
 
           <div
             v-if="categoryMenuOpen"
-            class="absolute top-full left-0 right-0 z-10 bg-white border border-[#eae8e4] shadow-lg mt-0.5 max-h-48 overflow-y-auto"
+            class="absolute top-full left-0 right-0 z-10 bg-white border border-gray-300 shadow-lg mt-0.5 max-h-48 overflow-y-auto"
           >
             <button
               v-for="cat in CATEGORY_OPTIONS"
@@ -604,6 +612,37 @@ onBeforeRouteLeave((_to, _from, next) => {
         </div>
       </div>
 
+      <!-- Cover image -->
+      <div>
+        <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-3">Cover Image</p>
+
+        <div v-if="coverImagePreview" class="relative">
+          <img :src="coverImagePreview" alt="Cover" class="w-full aspect-video object-cover border border-gray-300" />
+          <button
+            class="absolute top-2 right-2 bg-white border border-gray-300 p-1 hover:bg-gray-100 transition"
+            title="Remove image"
+            @click="removeCoverImage"
+          >
+            <Icon icon="lucide:x" class="w-3 h-3 text-gray-500" />
+          </button>
+        </div>
+
+        <label
+          v-else
+          class="block border-2 border-dashed transition cursor-pointer"
+          :class="isDraggingOver ? 'border-[#8b1e21] bg-red-50' : 'border-gray-300 hover:border-gray-400'"
+          @dragover.prevent="isDraggingOver = true"
+          @dragleave="isDraggingOver = false"
+          @drop.prevent="handleDrop"
+        >
+          <input type="file" accept="image/*" class="sr-only" @change="handleFileSelect" />
+          <div class="flex flex-col items-center justify-center gap-2 py-8 text-gray-400">
+            <Icon icon="lucide:image-plus" class="w-6 h-6" />
+            <span class="text-xs text-center">Drag & drop or <span class="text-[#8b1e21] font-semibold">browse</span></span>
+          </div>
+        </label>
+      </div>
+
     </aside>
   </div>
 
@@ -616,7 +655,7 @@ onBeforeRouteLeave((_to, _from, next) => {
     >
       <div class="bg-white w-full max-w-sm p-6 shadow-xl">
         <div class="flex items-start gap-3 mb-5">
-          <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-amber-50 border border-amber-200">
+          <div class="w-8 h-8 shrink-0 flex items-center justify-center bg-amber-50 border border-amber-200">
             <Icon icon="lucide:alert-triangle" class="w-4 h-4 text-amber-500" />
           </div>
           <div>
@@ -630,7 +669,7 @@ onBeforeRouteLeave((_to, _from, next) => {
             @click="saveAndClose"
           >Save to draft and close</button>
           <button
-            class="w-full border border-[#eae8e4] text-[#111418] text-xs font-semibold py-2.5 hover:bg-gray-50 transition"
+            class="w-full border border-gray-300 text-[#111418] text-xs font-semibold py-2.5 hover:bg-gray-50 transition"
             @click="confirmClose"
           >Discard changes and close</button>
           <button
@@ -763,5 +802,20 @@ onBeforeRouteLeave((_to, _from, next) => {
   max-width: 100%;
   height: auto;
   margin: 1rem 0;
+}
+
+.draft-title-input {
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+.editor-body :deep(.ProseMirror) {
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+
+/* --- Mobile touch targets --- */
+@media (max-width: 639px) {
+  .toolbar-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
 }
 </style>
