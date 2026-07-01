@@ -17,6 +17,7 @@ import {
   getDraftById,
   createDraft,
   updateDraft,
+  deleteDraft,
   publishDraft,
 } from '../data/writing.js'
 
@@ -37,6 +38,28 @@ const saveMessage = ref('')
 const showCloseModal = ref(false)
 const isDraggingOver = ref(false)
 
+// --- Publish validation ---
+const fieldErrors = ref({ title: false, tags: false, coverImage: false, category: false, wordCount: false })
+const toastMessage = ref('')
+const showToast = ref(false)
+let toastTimer = null
+
+function clearFieldError(field) {
+  fieldErrors.value[field] = false
+}
+
+function showToastMessage(msg) {
+  toastMessage.value = msg
+  showToast.value = true
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { showToast.value = false }, 4000)
+}
+
+const bodyWordCount = computed(() => {
+  const text = (editor.value?.getText() ?? '').trim()
+  return text ? text.split(/\s+/).length : 0
+})
+
 // Category options
 const CATEGORY_OPTIONS = [
   'Speech Writing', 'Rhetoric', 'Public Speaking', 'Politics',
@@ -55,11 +78,13 @@ function addTag() {
   if (tags.value.length >= TAGS_MAX) return
   tags.value.push(val)
   tagInput.value = ''
+  clearFieldError('tags')
   scheduleSave()
 }
 
 function removeTag(tag) {
   tags.value = tags.value.filter(t => t !== tag)
+  clearFieldError('tags')
   scheduleSave()
 }
 
@@ -188,6 +213,16 @@ function saveNow() {
     return
   }
 
+  // If all content was erased, delete the draft entirely
+  if (!hasContent.value) {
+    deleteDraft(draftId.value)
+    draftId.value = null
+    syncSavedSnapshot()
+    // Replace back to the new-draft route so the editor resets
+    router.replace({ name: 'DraftNew' })
+    return
+  }
+
   updateDraft(draftId.value, {
     title: title.value,
     body,
@@ -202,12 +237,39 @@ function saveNow() {
 }
 
 function handlePublish() {
-  // If no draft exists yet and there's content, save first then navigate to preview
+  // Reset all field errors
+  fieldErrors.value = { title: false, tags: false, coverImage: false, category: false, wordCount: false }
+
+  // Validation checks in priority order (stops at first missing)
+  if (!title.value.trim()) {
+    fieldErrors.value.title = true
+    showToastMessage('Add a title before publishing')
+    return
+  }
+  if (!tags.value.length) {
+    fieldErrors.value.tags = true
+    showToastMessage('Add at least one tag')
+    return
+  }
+  if (!coverImage.value) {
+    fieldErrors.value.coverImage = true
+    showToastMessage('Add a cover image')
+    return
+  }
+  if (!categories.value.length) {
+    fieldErrors.value.category = true
+    showToastMessage('Select a category')
+    return
+  }
+  if (bodyWordCount.value < 100) {
+    fieldErrors.value.wordCount = true
+    showToastMessage(`Content must be at least 100 words (${bodyWordCount.value} words)`)
+    return
+  }
+
+  // If no draft exists yet, save first then navigate to preview
   if (!draftId.value) {
-    if (!hasContent.value) return // nothing to publish
     saveNow()
-    // saveNow will replace the route to DraftEdit, then we navigate to preview
-    // Use a small delay to let the route replace complete
     setTimeout(() => {
       if (draftId.value) {
         router.push({ name: 'DraftPreview', params: { id: draftId.value } })
@@ -262,6 +324,7 @@ function readImageFile(file) {
     const base64 = e.target.result
     coverImage.value = base64
     coverImagePreview.value = base64
+    clearFieldError('coverImage')
     scheduleSave()
   }
   reader.readAsDataURL(file)
@@ -280,6 +343,7 @@ function toggleCategory(cat) {
   } else {
     categories.value = [...categories.value, cat]
   }
+  clearFieldError('category')
   scheduleSave()
 }
 
@@ -370,6 +434,22 @@ onBeforeRouteLeave((_to, _from, next) => {
     </div>
   </div>
 
+  <!-- Toast notification -->
+  <Teleport to="body">
+    <div
+      v-if="showToast"
+      class="fixed top-16 inset-x-0 z-40 flex justify-center pointer-events-none"
+    >
+      <div class="bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium px-5 py-2.5 shadow-md flex items-center gap-2 pointer-events-auto max-w-md mx-4">
+        <Icon icon="lucide:alert-triangle" class="w-3.5 h-3.5 shrink-0 text-amber-500" />
+        {{ toastMessage }}
+        <button class="ml-auto text-amber-400 hover:text-amber-600 shrink-0" @click="showToast = false">
+          <Icon icon="lucide:x" class="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  </Teleport>
+
   <!-- Main layout -->
   <div class="max-w-7xl m-auto px-6 py-8 pt-14 min-h-screen gap-4 bg-white flex flex-col lg:flex-row">
 
@@ -384,9 +464,14 @@ onBeforeRouteLeave((_to, _from, next) => {
         v-model="title"
         type="text"
         placeholder="Name your blog"
-        class="draft-title-input w-full text-[1rem] font-normal text-[#111418] placeholder-gray-300 border border-gray-300 outline-none mb-6 bg-transparent leading-tight px-3 py-2 focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] transition"
-        @input="scheduleSave"
+        :class="[
+          'draft-title-input w-full text-[1rem] font-normal text-[#111418] placeholder-gray-300 border outline-none mb-1 bg-transparent leading-tight px-3 py-2 focus:ring-1 transition',
+          fieldErrors.title ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-[#8b1e21] focus:ring-[#8b1e21]'
+        ]"
+        @input="scheduleSave(); clearFieldError('title')"
       />
+      <p v-if="fieldErrors.title" class="text-[10px] text-red-500 mb-4">Title is required</p>
+      <div v-else class="mb-4" />
 
       <!-- Content label -->
       <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-2">Content</p>
@@ -511,6 +596,12 @@ onBeforeRouteLeave((_to, _from, next) => {
       <!-- Hidden file input for image upload -->
       <input ref="imageInput" type="file" accept="image/*" class="sr-only" @change="handleImageInsert" />
 
+      <!-- Word count hint -->
+      <div class="flex items-center justify-between mt-1">
+        <p v-if="fieldErrors.wordCount" class="text-[10px] text-red-500">Content must be at least 100 words ({{ bodyWordCount }} words)</p>
+        <p v-else class="text-[10px] text-gray-400">{{ bodyWordCount }} words</p>
+      </div>
+
       <!-- Tiptap content area -->
       <EditorContent :editor="editor" class="editor-body border border-gray-300 px-4 py-4" />
     </div>
@@ -521,6 +612,7 @@ onBeforeRouteLeave((_to, _from, next) => {
       <!-- Tags (SEO) -->
       <div>
         <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-2">Tags</p>
+        <p v-if="fieldErrors.tags" class="text-[10px] text-red-500 mb-1">Add at least one tag</p>
 
         <!-- Selected tags -->
         <div v-if="tags.length" class="flex flex-wrap gap-1.5 mb-2">
@@ -570,6 +662,7 @@ onBeforeRouteLeave((_to, _from, next) => {
       <!-- Categories -->
       <div>
         <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-2">Category</p>
+        <p v-if="fieldErrors.category" class="text-[10px] text-red-500 mb-1">Select a category</p>
 
         <!-- Selected tags -->
         <div v-if="categories.length" class="flex flex-wrap gap-1.5 mb-2">
@@ -615,6 +708,7 @@ onBeforeRouteLeave((_to, _from, next) => {
       <!-- Cover image -->
       <div>
         <p class="text-[10px] uppercase tracking-[2px] text-gray-400 mb-3">Cover Image</p>
+        <p v-if="fieldErrors.coverImage" class="text-[10px] text-red-500 mb-1">Add a cover image</p>
 
         <div v-if="coverImagePreview" class="relative">
           <img :src="coverImagePreview" alt="Cover" class="w-full aspect-video object-cover border border-gray-300" />
