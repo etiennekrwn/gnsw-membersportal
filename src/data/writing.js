@@ -76,10 +76,6 @@ export function getDrafts() {
   return allDraftRecords().filter(d => d.status === 'Draft' && !hidden.has(d.id))
 }
 
-export function getArchived() {
-  return allDraftRecords().filter(d => d.status === 'Archived')
-}
-
 export function getPublished() {
   const stored = loadStoredPublished()
   const storedIds = new Set(stored.map(p => p.id))
@@ -91,10 +87,6 @@ export function getDraftById(id) {
   const hidden = loadHiddenDraftIds()
   if (hidden.has(id)) return null
   return allDraftRecords().find(d => d.id === id) ?? null
-}
-
-export function getPublishedById(id) {
-  return getPublished().find(p => p.id === id) ?? null
 }
 
 export function createDraft({
@@ -199,6 +191,16 @@ export function restoreDraft(id) {
   return updateDraft(id, { status: 'Draft' })
 }
 
+/**
+ * Extract the first image src from HTML body content.
+ * Returns null if no image is found.
+ */
+function extractFirstImageSrc(html) {
+  if (!html) return null
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  return match ? match[1] : null
+}
+
 export function publishDraft(id) {
   const draft = getDraftById(id)
   if (!draft) return { ok: false, error: 'Draft not found.' }
@@ -209,6 +211,12 @@ export function publishDraft(id) {
   if (!body) return { ok: false, error: 'Add content before publishing.' }
   if (wordCount(body) < 50) return { ok: false, error: 'Draft needs at least 50 words before publishing.' }
 
+  // Auto-extract cover image from body if not manually set
+  let coverImage = draft.coverImage ?? null
+  if (!coverImage) {
+    coverImage = extractFirstImageSrc(body)
+  }
+
   const published = {
     id: `published-${Date.now()}`,
     draftId: draft.id,
@@ -218,7 +226,7 @@ export function publishDraft(id) {
     slug: draft.slug || generateSlug(title),
     categories: draft.categories ?? [],
     tags: draft.tags ?? [],
-    coverImage: draft.coverImage ?? null,
+    coverImage,
     datePublished: formatDate(),
     readTime: Math.max(1, Math.ceil(wordCount(body) / 200)),
     claps: 0,
@@ -236,6 +244,10 @@ export function publishDraft(id) {
   saveStoredDrafts(loadStoredDrafts().filter(d => d.id !== id))
 
   return { ok: true, published }
+}
+
+export function getPublishedById(id) {
+  return getPublished().find(p => p.id === id) ?? null
 }
 
 export function unpublishPost(id) {
@@ -273,12 +285,11 @@ export function deletePublished(id) {
 
 export function searchWriting(query) {
   const q = query.trim().toLowerCase()
-  if (!q) return { drafts: getDrafts(), published: getPublished(), archived: getArchived() }
+  if (!q) return { drafts: getDrafts(), published: getPublished() }
   const match = (item) =>
     item.title.toLowerCase().includes(q) || item.excerpt.toLowerCase().includes(q)
   return {
     drafts: getDrafts().filter(match),
     published: getPublished().filter(match),
-    archived: getArchived().filter(match),
   }
 }

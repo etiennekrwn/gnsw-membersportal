@@ -6,11 +6,8 @@ import EmptyState from '../components/ui/EmptyState.vue'
 import {
   getDrafts,
   getPublished,
-  getArchived,
   deleteDraft,
   publishDraft,
-  archiveDraft,
-  restoreDraft,
   unpublishPost,
   deletePublished,
 } from '../data/writing.js'
@@ -18,14 +15,13 @@ import {
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref('Drafts')
-const tabs = ['Drafts', 'Published', 'Archived']
+const tabs = ['Drafts', 'Published']
 const openMenuId = ref(null)
 const toast = ref('')
 const fallbackThumbnail = 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=900'
 
 const drafts = ref([])
 const published = ref([])
-const archived = ref([])
 
 watch(
   () => route.query.tab,
@@ -38,7 +34,6 @@ watch(
 function refreshLists() {
   drafts.value = getDrafts()
   published.value = getPublished()
-  archived.value = getArchived()
 }
 
 function showToast(message) {
@@ -97,22 +92,6 @@ function handlePublish(id, event) {
     activeTab.value = 'Published'
     showToast('Draft published')
   }
-  closeMenu()
-}
-
-function handleArchive(id, event) {
-  event.stopPropagation()
-  archiveDraft(id)
-  refreshLists()
-  showToast('Draft archived')
-  closeMenu()
-}
-
-function handleRestore(id, event) {
-  event.stopPropagation()
-  restoreDraft(id)
-  refreshLists()
-  showToast('Draft restored')
   closeMenu()
 }
 
@@ -272,13 +251,12 @@ onUnmounted(() => {
               >
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleEdit(draft.id, $event)">Edit</button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-[#8b1e21] hover:bg-[#faf9f5] font-medium" @click="handlePublish(draft.id, $event)">Publish</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleArchive(draft.id, $event)">Archive</button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" @click="handleDelete(draft.id, $event)">Delete</button>
               </div>
             </div>
 
             <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
-              <img :src="draft.thumbnail || fallbackThumbnail" :alt="draft.title" class="w-full h-full object-cover" />
+              <img :src="draft.coverImage || draft.thumbnail || fallbackThumbnail" :alt="draft.title" class="w-full h-full object-cover" />
             </div>
           </div>
         </article>
@@ -317,7 +295,7 @@ onUnmounted(() => {
             <div class="flex items-center gap-4 text-xs text-gray-400">
               <span>{{ post.readTime }} min read</span>
               <span class="flex items-center gap-1"><Icon icon="lucide:eye" class="w-3.5 h-3.5" /> {{ post.views }}</span>
-              <span class="flex items-center gap-1"><Icon icon="lucide:heart" class="w-3.5 h-3.5" /> {{ post.claps }}</span>
+              <span class="flex items-center gap-1"><Icon icon="mdi:thumb-up" class="w-3.5 h-3.5" /> {{ post.claps }}</span>
             </div>
           </div>
 
@@ -345,64 +323,7 @@ onUnmounted(() => {
             </div>
 
             <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
-              <img :src="post.thumbnail || fallbackThumbnail" :alt="post.title" class="w-full h-full object-cover" />
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
-
-    <div v-if="activeTab === 'Archived'">
-      <div class="mb-6">
-        <span class="text-sm font-semibold text-gray-700">{{ archived.length }} Archived Drafts</span>
-      </div>
-
-      <EmptyState
-        v-if="archived.length === 0"
-        icon="lucide:archive"
-        title="No archived drafts"
-        description="Archived drafts are kept here until you restore or delete them."
-      />
-
-      <div v-else class="space-y-4">
-        <article
-          v-for="draft in archived"
-          :key="draft.id"
-          class="flex items-start justify-between gap-6 py-8 border-b border-[#eae8e4] group"
-        >
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 mb-3">
-             
-              <span class="text-xs text-gray-600">Archived</span>
-              <span class="text-xs text-gray-400">{{ draft.lastModified }}</span>
-            </div>
-            <h3 class="text-lg font-bold text-[#111418] mb-2 line-clamp-2">{{ draft.title }}</h3>
-            <p class="text-sm text-gray-500 leading-relaxed line-clamp-2 mb-4">{{ draft.excerpt }}</p>
-            <span class="text-xs text-gray-400">{{ draft.wordCount }} words</span>
-          </div>
-
-          <div class="flex flex-col items-end gap-3 shrink-0">
-            <div class="relative">
-              <button
-                type="button"
-                class="text-gray-400 hover:text-[#111418] p-1"
-                aria-label="Archived actions"
-                @click="toggleMenu(draft.id, $event)"
-              >
-                <Icon icon="lucide:more-vertical" class="w-5 h-5" />
-              </button>
-              <div
-                v-if="openMenuId === draft.id"
-                class="absolute right-0 top-full mt-1 w-44 bg-white border border-[#eae8e4] shadow-lg z-10 py-1"
-                @click.stop
-              >
-                <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleRestore(draft.id, $event)">Restore</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" @click="handleDelete(draft.id, $event)">Delete</button>
-              </div>
-            </div>
-
-            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
-              <img :src="draft.thumbnail || fallbackThumbnail" :alt="draft.title" class="w-full h-full object-cover" />
+              <img :src="post.coverImage || post.thumbnail || fallbackThumbnail" :alt="post.title" class="w-full h-full object-cover" />
             </div>
           </div>
         </article>
@@ -410,4 +331,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-

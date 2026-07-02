@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { getDraftById, updateDraft, publishDraft } from '../data/writing.js'
+import { getDraftById, publishDraft } from '../data/writing.js'
+import ArticleBody from '../components/article/ArticleBody.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -10,6 +11,9 @@ const router = useRouter()
 const draft = ref(null)
 const publishing = ref(false)
 const publishError = ref('')
+const isLiked = ref(false)
+const likeCount = ref(0)
+const shareMessage = ref('')
 
 onMounted(() => {
   const d = getDraftById(route.params.id)
@@ -28,7 +32,6 @@ function handlePublish() {
   publishing.value = true
   publishError.value = ''
 
-  // Sync any pending body content from the editor (already saved via auto-save)
   const result = publishDraft(route.params.id)
   if (!result.ok) {
     publishError.value = result.error
@@ -37,6 +40,29 @@ function handlePublish() {
   }
 
   router.push({ name: 'MyWriting', query: { tab: 'Published', published: result.published.id } })
+}
+
+const toggleLike = () => {
+  isLiked.value = !isLiked.value
+  likeCount.value += isLiked.value ? 1 : -1
+}
+
+const handleShare = async () => {
+  if (!draft.value) return
+  const shareUrl = window.location.href
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: draft.value.title, url: shareUrl })
+      return
+    }
+    await navigator.clipboard.writeText(shareUrl)
+    shareMessage.value = 'Link copied'
+    setTimeout(() => { shareMessage.value = '' }, 2000)
+  } catch (error) {
+    if (error.name === 'AbortError') return
+    shareMessage.value = 'Could not share link'
+    setTimeout(() => { shareMessage.value = '' }, 2000)
+  }
 }
 </script>
 
@@ -84,44 +110,107 @@ function handlePublish() {
   <div class="max-w-7xl m-auto px-6 pt-20 pb-16">
     <article v-if="draft" class="max-w-3xl mx-auto">
 
-      <!-- Cover image -->
-      <div v-if="draft.coverImage" class="mb-8">
-        <img :src="draft.coverImage" alt="Cover" class="w-full aspect-video object-cover border border-gray-300" />
-      </div>
-
       <!-- Categories -->
-      <div v-if="draft.categories?.length" class="flex flex-wrap gap-1.5 mb-4">
+      <div v-if="draft.categories?.length" class="flex flex-wrap items-center gap-4 mb-6">
         <span
           v-for="cat in draft.categories"
           :key="cat"
-          class="inline-flex items-center bg-[#8b1e21]/10 text-[#8b1e21] text-[11px] font-medium px-2 py-0.5"
+          class="px-2.5 py-1 text-[9px] uppercase tracking-[2px] font-bold bg-[#8b1e21]/10 text-[#8b1e21] border border-[#8b1e21]/20"
         >{{ cat }}</span>
       </div>
 
       <!-- Title -->
-      <h1 class="font-['Playfair_Display'] text-3xl sm:text-4xl font-bold text-[#111418] leading-tight mb-4">
+      <h1 class="text-3xl md:text-4xl font-extrabold text-[#111418] leading-tight mb-6">
         {{ draft.title }}
       </h1>
 
-      <!-- Excerpt -->
-      <p v-if="draft.excerpt" class="text-base sm:text-lg text-gray-500 leading-relaxed mb-6">
-        {{ draft.excerpt }}
-      </p>
+      <!-- Engagement bar: top -->
+      <div class="flex items-center justify-between border-y border-[#eae8e4] py-3 mb-10">
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
+            :class="isLiked ? 'text-[#8b1e21]' : 'text-slate-400 hover:text-[#111418]'"
+            @click="toggleLike"
+          >
+            <Icon :icon="isLiked ? 'lucide:heart' : 'lucide:heart'" :fill="isLiked ? 'currentColor' : 'none'" class="w-4 h-4" />
+            {{ likeCount }}
+          </button>
+          <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <Icon icon="lucide:eye" class="w-4 h-4" />
+            0
+          </div>
+        </div>
+        <div class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-[10px] uppercase tracking-[1.5px] font-semibold text-slate-400 hover:text-[#111418] transition-colors"
+            @click="handleShare"
+          >
+            <Icon icon="lucide:share-2" class="w-3.5 h-3.5" />
+            Share
+          </button>
+          <span
+            v-if="shareMessage"
+            class="absolute right-0 top-full mt-1 text-[10px] uppercase tracking-[1.5px] font-semibold text-[#8b1e21] whitespace-nowrap"
+          >
+            {{ shareMessage }}
+          </span>
+        </div>
+      </div>
 
-      <!-- Tags -->
-      <div v-if="draft.tags?.length" class="flex flex-wrap gap-1.5 mb-8">
-        <span
-          v-for="tag in draft.tags"
-          :key="tag"
-          class="inline-flex items-center bg-gray-100 text-gray-600 text-[11px] px-2 py-0.5"
-        >#{{ tag }}</span>
+      <!-- Cover image -->
+      <div v-if="draft.coverImage" class="aspect-[16/9] overflow-hidden bg-[#eae8e4] rounded-lg mb-10">
+        <img :src="draft.coverImage" :alt="draft.title" class="h-full w-full object-cover" />
       </div>
 
       <!-- Body -->
-      <div class="prose prose-lg max-w-none" v-html="draft.body" />
+      <ArticleBody :html="draft.body" />
+
+      <!-- Tags -->
+      <div v-if="draft.tags?.length" class="mt-12 pt-8 border-t border-[#eae8e4] flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 text-[10px] uppercase tracking-[2px] text-slate-400 mr-2">
+          <Icon icon="lucide:tag" class="w-3 h-3" />
+          Tags
+        </div>
+        <span
+          v-for="tag in draft.tags"
+          :key="tag"
+          class="px-3 py-1 text-[10px] uppercase tracking-[1.5px] font-semibold border border-[#eae8e4] text-slate-500 hover:border-[#111418]/30 hover:text-[#111418] transition-colors cursor-pointer rounded-full"
+        >
+          {{ tag }}
+        </span>
+      </div>
+
+      <!-- Engagement bar: bottom -->
+      <div class="mt-8 flex items-center justify-between border-y border-[#eae8e4] py-3">
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
+            :class="isLiked ? 'text-[#8b1e21]' : 'text-slate-400 hover:text-[#111418]'"
+            @click="toggleLike"
+          >
+            <Icon icon="lucide:heart" :fill="isLiked ? 'currentColor' : 'none'" class="w-4 h-4" />
+            {{ isLiked ? 'Liked' : 'Like' }} · {{ likeCount }}
+          </button>
+          <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <Icon icon="lucide:eye" class="w-4 h-4" />
+            0 views
+          </div>
+        </div>
+        <button
+          type="button"
+          class="flex items-center gap-1.5 text-[10px] uppercase tracking-[1.5px] font-semibold text-slate-400 hover:text-[#111418] transition-colors"
+          @click="handleShare"
+        >
+          <Icon icon="lucide:share-2" class="w-3.5 h-3.5" />
+          Share
+        </button>
+      </div>
 
       <!-- Draft info footer -->
-      <div class="mt-12 pt-6 border-t border-gray-200 flex items-center justify-between text-xs text-gray-400">
+      <div class="mt-10 pt-6 border-t border-gray-200 flex items-center justify-between text-xs text-gray-400">
         <span>{{ draft.wordCount }} words</span>
         <span>Last modified {{ draft.lastModified }}</span>
       </div>
@@ -133,92 +222,3 @@ function handlePublish() {
     </div>
   </div>
 </template>
-
-<style scoped>
-.prose :deep(h2) {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  color: #111418;
-}
-.prose :deep(h3) {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #111418;
-}
-.prose :deep(p) { margin-bottom: 1rem; }
-.prose :deep(ul) {
-  list-style-type: disc;
-  padding-left: 1.25rem;
-  margin-bottom: 1rem;
-}
-.prose :deep(ol) {
-  list-style-type: decimal;
-  padding-left: 1.25rem;
-  margin-bottom: 1rem;
-}
-.prose :deep(li) { margin-bottom: 0.25rem; }
-.prose :deep(blockquote) {
-  border-left: 4px solid #8b1e21;
-  padding-left: 1rem;
-  font-style: italic;
-  color: #6b7280;
-  margin: 1rem 0;
-}
-.prose :deep(code) {
-  background: #f3f4f6;
-  padding: 0.125rem 0.25rem;
-  font-size: 0.875rem;
-  font-family: monospace;
-  color: #8b1e21;
-}
-.prose :deep(pre) {
-  background: #111827;
-  color: #f3f4f6;
-  padding: 1rem;
-  overflow-x: auto;
-  margin-bottom: 1rem;
-}
-.prose :deep(pre code) {
-  background: transparent;
-  color: inherit;
-  padding: 0;
-}
-.prose :deep(a) {
-  color: #8b1e21;
-  text-decoration: underline;
-}
-.prose :deep(hr) {
-  border: none;
-  border-top: 1px solid #eae8e4;
-  margin: 2rem 0;
-}
-.prose :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-}
-.prose :deep(td),
-.prose :deep(th) {
-  border: 1px solid #eae8e4;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-}
-.prose :deep(th) {
-  background: #f9fafb;
-  font-weight: 600;
-  text-align: left;
-}
-.prose :deep(img) {
-  max-width: 100%;
-  height: auto;
-  margin: 1rem 0;
-}
-.prose :deep(mark) {
-  background: #fef9c3;
-  padding: 0 0.125rem;
-}
-</style>

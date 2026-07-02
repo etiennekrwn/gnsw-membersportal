@@ -236,6 +236,16 @@ function saveNow() {
   setTimeout(() => { saveMessage.value = '' }, 2000)
 }
 
+/**
+ * Extract the first image src from HTML body content.
+ * Returns null if no image is found.
+ */
+function extractFirstImageSrc(html) {
+  if (!html) return null
+  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  return match ? match[1] : null
+}
+
 function handlePublish() {
   // Reset all field errors
   fieldErrors.value = { title: false, tags: false, coverImage: false, category: false, wordCount: false }
@@ -251,11 +261,21 @@ function handlePublish() {
     showToastMessage('Add at least one tag')
     return
   }
-  if (!coverImage.value) {
+
+  // Smart cover image: auto-extract from body content if not manually set
+  const bodyHtml = editor.value?.getHTML() ?? ''
+  const hasBodyImage = !!extractFirstImageSrc(bodyHtml)
+  if (!coverImage.value && hasBodyImage) {
+    coverImage.value = extractFirstImageSrc(bodyHtml)
+    coverImagePreview.value = coverImage.value
+    clearFieldError('coverImage')
+  }
+  if (!coverImage.value && !hasBodyImage) {
     fieldErrors.value.coverImage = true
     showToastMessage('Add a cover image')
     return
   }
+
   if (!categories.value.length) {
     fieldErrors.value.category = true
     showToastMessage('Select a category')
@@ -267,8 +287,10 @@ function handlePublish() {
     return
   }
 
-  // If no draft exists yet, save first then navigate to preview
+  // Force-save everything immediately to persist all changes
+  // (including auto-extracted cover image and any pending body content)
   if (!draftId.value) {
+    // No draft exists yet — create one first, then navigate
     saveNow()
     setTimeout(() => {
       if (draftId.value) {
@@ -278,10 +300,8 @@ function handlePublish() {
     return
   }
 
-  // Auto-save any pending changes
-  if (!saved.value) {
-    saveNow()
-  }
+  // Save now (synchronous call to updateDraft + syncSavedSnapshot)
+  saveNow()
 
   router.push({ name: 'DraftPreview', params: { id: draftId.value } })
 }
