@@ -1,25 +1,441 @@
 <script setup>
+import { ref, onMounted, inject } from 'vue'
+import { Icon } from '@iconify/vue'
+import { loadSettings, saveSettings, getDefaultSettings } from '../data/userProfile.js'
+
+const currentUser = inject('currentUser')
+
+// Settings state
+const settings = ref({
+  notifications: {
+    emailNotifications: true,
+    weeklyDigest: false,
+    newArticleAlerts: true,
+    commentAlerts: true,
+    memberAnnouncements: false,
+  },
+  privacy: {
+    showInDirectory: true,
+    showWritingActivity: true,
+    showEmailToMembers: false,
+  },
+  preferences: {
+    darkMode: false,
+    fontSize: 'medium',
+  },
+})
+
+const saved = ref(false)
+const activeSection = ref('notifications')
+
+// Password change
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordError = ref('')
+const passwordSuccess = ref(false)
+
+const sections = [
+  { id: 'notifications', label: 'Notifications', icon: 'lucide:bell' },
+  { id: 'privacy', label: 'Privacy', icon: 'lucide:eye-off' },
+  { id: 'preferences', label: 'Preferences', icon: 'lucide:sliders-horizontal' },
+  { id: 'account', label: 'Account', icon: 'lucide:user-cog' },
+]
+
+function loadSettingsData() {
+  settings.value = loadSettings()
+}
+
+function toggleSetting(category, key) {
+  settings.value[category][key] = !settings.value[category][key]
+  saveSettingsData()
+}
+
+function setFontSize(size) {
+  settings.value.preferences.fontSize = size
+  saveSettingsData()
+}
+
+function saveSettingsData() {
+  saveSettings(settings.value)
+  saved.value = true
+  setTimeout(() => { saved.value = false }, 2000)
+}
+
+function handleChangePassword() {
+  passwordError.value = ''
+  passwordSuccess.value = false
+
+  if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
+    passwordError.value = 'All fields are required.'
+    return
+  }
+  if (newPassword.value.length < 6) {
+    passwordError.value = 'New password must be at least 6 characters.'
+    return
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    passwordError.value = 'Passwords do not match.'
+    return
+  }
+
+  // In a real app, this would call an API. For now we simulate success.
+  passwordSuccess.value = true
+  currentPassword.value = ''
+  newPassword.value = ''
+  confirmPassword.value = ''
+  setTimeout(() => { passwordSuccess.value = false }, 3000)
+}
+
+function handleResetSettings() {
+  if (confirm('Reset all settings to defaults?')) {
+    settings.value = getDefaultSettings()
+    saveSettingsData()
+  }
+}
+
+function handleDeleteAccount() {
+  if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+    if (confirm('This will permanently delete all your data. Continue?')) {
+      // In production, this would call an API
+      alert('Account deletion request submitted.')
+    }
+  }
+}
+
+onMounted(() => {
+  loadSettingsData()
+})
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto px-6 py-8">
-    <h1 class="text-3xl font-extrabold text-[#111418] mb-2">Settings</h1>
-    <p class="text-gray-500 text-sm mb-10">Manage notifications, privacy, and account preferences.</p>
+  <div class="max-w-6xl mx-auto px-6 py-8">
+    <div class="flex items-start justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-3xl font-extrabold text-[#111418] mb-2">Settings</h1>
+        <p class="text-gray-500 text-sm">Manage notifications, privacy, and account preferences.</p>
+      </div>
+      <p v-if="saved" class="text-xs font-semibold text-[#8b1e21] shrink-0">Settings saved</p>
+    </div>
 
-    <div class="space-y-4">
-      <div class="border border-[#eae8e4] rounded-lg p-5 bg-white">
-        <h2 class="text-sm font-semibold text-[#111418] mb-1">Notifications</h2>
-        <p class="text-sm text-gray-500">Email and in-app notification preferences will be configurable here.</p>
+    <div class="flex flex-col lg:flex-row gap-8">
+
+      <!-- Section tabs (sidebar) -->
+      <div class="lg:w-56 shrink-0">
+        <nav class="flex lg:flex-col gap-1 overflow-x-auto">
+          <button
+            v-for="section in sections"
+            :key="section.id"
+            type="button"
+            class="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-md transition-colors"
+            :class="activeSection === section.id
+              ? 'bg-[#8b1e21]/10 text-[#8b1e21]'
+              : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'"
+            @click="activeSection = section.id"
+          >
+            <Icon :icon="section.icon" class="w-4 h-4" />
+            {{ section.label }}
+          </button>
+        </nav>
       </div>
-      <div class="border border-[#eae8e4] rounded-lg p-5 bg-white">
-        <h2 class="text-sm font-semibold text-[#111418] mb-1">Privacy</h2>
-        <p class="text-sm text-gray-500">Control profile visibility and writing activity settings.</p>
-      </div>
-      <div class="border border-[#eae8e4] rounded-lg p-5 bg-white">
-        <h2 class="text-sm font-semibold text-[#111418] mb-1">Account</h2>
-        <p class="text-sm text-gray-500">Password, membership tier, and billing options will appear here.</p>
+
+      <!-- Settings content -->
+      <div class="flex-1 min-w-0 space-y-6">
+
+        <!-- === NOTIFICATIONS === -->
+        <div v-if="activeSection === 'notifications'" class="space-y-4">
+          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
+            <h2 class="text-sm font-bold text-[#111418] mb-1">Email Notifications</h2>
+            <p class="text-xs text-gray-400 mb-5">Control which emails you receive from GNSW.</p>
+
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">Email notifications</p>
+                  <p class="text-xs text-gray-400">Receive email updates about your activity</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.notifications.emailNotifications"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.notifications.emailNotifications ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('notifications', 'emailNotifications')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.notifications.emailNotifications }" />
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">Weekly digest</p>
+                  <p class="text-xs text-gray-400">A roundup of top articles and updates</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.notifications.weeklyDigest"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.notifications.weeklyDigest ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('notifications', 'weeklyDigest')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.notifications.weeklyDigest }" />
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">New article alerts</p>
+                  <p class="text-xs text-gray-400">When members publish new articles</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.notifications.newArticleAlerts"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.notifications.newArticleAlerts ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('notifications', 'newArticleAlerts')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.notifications.newArticleAlerts }" />
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">Comments on your posts</p>
+                  <p class="text-xs text-gray-400">When someone replies to your writing</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.notifications.commentAlerts"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.notifications.commentAlerts ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('notifications', 'commentAlerts')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.notifications.commentAlerts }" />
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">Member announcements</p>
+                  <p class="text-xs text-gray-400">Guild news, events, and program updates</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.notifications.memberAnnouncements"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.notifications.memberAnnouncements ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('notifications', 'memberAnnouncements')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.notifications.memberAnnouncements }" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- === PRIVACY === -->
+        <div v-if="activeSection === 'privacy'" class="space-y-4">
+          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
+            <h2 class="text-sm font-bold text-[#111418] mb-1">Privacy Controls</h2>
+            <p class="text-xs text-gray-400 mb-5">Manage your visibility across the Guild.</p>
+
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">Show in member directory</p>
+                  <p class="text-xs text-gray-400">Let other members find you in the directory</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.privacy.showInDirectory"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.privacy.showInDirectory ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('privacy', 'showInDirectory')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.privacy.showInDirectory }" />
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">Show writing activity publicly</p>
+                  <p class="text-xs text-gray-400">Display your published articles on your profile</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.privacy.showWritingActivity"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.privacy.showWritingActivity ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('privacy', 'showWritingActivity')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.privacy.showWritingActivity }" />
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-[#111418]">Show email to members</p>
+                  <p class="text-xs text-gray-400">Allow other Guild members to see your email</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  :aria-checked="settings.privacy.showEmailToMembers"
+                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+                  :class="settings.privacy.showEmailToMembers ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+                  @click="toggleSetting('privacy', 'showEmailToMembers')"
+                >
+                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.privacy.showEmailToMembers }" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- === PREFERENCES === -->
+        <div v-if="activeSection === 'preferences'" class="space-y-4">
+          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
+            <h2 class="text-sm font-bold text-[#111418] mb-1">Display Preferences</h2>
+            <p class="text-xs text-gray-400 mb-5">Customize how the portal looks and reads.</p>
+
+            <div class="space-y-6">
+              <div>
+                <p class="text-sm font-medium text-[#111418] mb-3">Font Size</p>
+                <div class="flex gap-2">
+                  <button
+                    type="button"
+                    class="px-4 py-2 text-xs font-semibold border rounded-md transition"
+                    :class="settings.preferences.fontSize === 'small'
+                      ? 'border-[#8b1e21] bg-[#8b1e21]/10 text-[#8b1e21]'
+                      : 'border-gray-300 text-gray-500 hover:border-gray-400'"
+                    @click="setFontSize('small')"
+                  >Small</button>
+                  <button
+                    type="button"
+                    class="px-4 py-2 text-xs font-semibold border rounded-md transition"
+                    :class="settings.preferences.fontSize === 'medium'
+                      ? 'border-[#8b1e21] bg-[#8b1e21]/10 text-[#8b1e21]'
+                      : 'border-gray-300 text-gray-500 hover:border-gray-400'"
+                    @click="setFontSize('medium')"
+                  >Medium</button>
+                  <button
+                    type="button"
+                    class="px-4 py-2 text-xs font-semibold border rounded-md transition"
+                    :class="settings.preferences.fontSize === 'large'
+                      ? 'border-[#8b1e21] bg-[#8b1e21]/10 text-[#8b1e21]'
+                      : 'border-gray-300 text-gray-500 hover:border-gray-400'"
+                    @click="setFontSize('large')"
+                  >Large</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reset -->
+          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
+            <h2 class="text-sm font-bold text-[#111418] mb-1">Reset Settings</h2>
+            <p class="text-xs text-gray-400 mb-4">Restore all settings to their default values.</p>
+            <button
+              type="button"
+              class="text-xs font-semibold text-red-600 border border-red-200 px-4 py-2 hover:bg-red-50 transition"
+              @click="handleResetSettings"
+            >
+              Reset to defaults
+            </button>
+          </div>
+        </div>
+
+        <!-- === ACCOUNT === -->
+        <div v-if="activeSection === 'account'" class="space-y-4">
+          <!-- Change password -->
+          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
+            <h2 class="text-sm font-bold text-[#111418] mb-1">Change Password</h2>
+            <p class="text-xs text-gray-400 mb-5">Update your account password.</p>
+
+            <div class="space-y-3 max-w-sm">
+              <div>
+                <label class="text-xs font-medium text-gray-600 mb-1 block">Current password</label>
+                <input
+                  v-model="currentPassword"
+                  type="password"
+                  placeholder="Enter current password"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-600 mb-1 block">New password</label>
+                <input
+                  v-model="newPassword"
+                  type="password"
+                  placeholder="At least 6 characters"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
+                />
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-600 mb-1 block">Confirm new password</label>
+                <input
+                  v-model="confirmPassword"
+                  type="password"
+                  placeholder="Repeat new password"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
+                />
+              </div>
+
+              <p v-if="passwordError" class="text-xs text-red-500">{{ passwordError }}</p>
+              <p v-if="passwordSuccess" class="text-xs text-green-600">Password updated successfully.</p>
+
+              <button
+                type="button"
+                class="bg-[#111418] text-white text-xs font-semibold px-4 py-2 hover:bg-gray-800 transition"
+                @click="handleChangePassword"
+              >
+                Update Password
+              </button>
+            </div>
+          </div>
+
+          <!-- Membership info -->
+          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
+            <h2 class="text-sm font-bold text-[#111418] mb-1">Membership</h2>
+            <p class="text-xs text-gray-400 mb-4">Your current tier and its benefits.</p>
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-full bg-[#8b1e21]/10 flex items-center justify-center">
+                <Icon icon="lucide:award" class="w-5 h-5 text-[#8b1e21]" />
+              </div>
+              <div>
+                <p class="text-sm font-bold text-[#111418]">{{ currentUser?.tierLabel ?? 'Member' }}</p>
+                <p class="text-xs text-gray-400">{{ currentUser?.tierShort ?? '—' }}</p>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500">
+              <span v-if="currentUser?.articleMonthlyLimit">
+                Article limit: {{ currentUser.articleMonthlyLimit }} per month
+              </span>
+              <span v-else>Unlimited articles</span>
+            </p>
+          </div>
+
+          <!-- Danger zone -->
+          <div class="border border-red-200 rounded-xl p-6 bg-white">
+            <h2 class="text-sm font-bold text-red-600 mb-1">Danger Zone</h2>
+            <p class="text-xs text-gray-400 mb-4">Irreversible actions for your account.</p>
+            <button
+              type="button"
+              class="text-xs font-semibold text-white bg-red-600 px-4 py-2 hover:bg-red-700 transition"
+              @click="handleDeleteAccount"
+            >
+              Delete Account
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </template>
-

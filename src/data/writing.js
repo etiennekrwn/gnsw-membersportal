@@ -179,18 +179,6 @@ export function deleteDraft(id) {
   saveStoredDrafts(loadStoredDrafts().filter(d => d.id !== id))
 }
 
-export function archiveDraft(id) {
-  const draft = getDraftById(id)
-  if (!draft) return null
-  return updateDraft(id, { status: 'Archived' })
-}
-
-export function restoreDraft(id) {
-  const record = allDraftRecords().find(d => d.id === id)
-  if (!record || record.status !== 'Archived') return null
-  return updateDraft(id, { status: 'Draft' })
-}
-
 /**
  * Extract the first image src from HTML body content.
  * Returns null if no image is found.

@@ -23,6 +23,7 @@
     "@tiptap/extension-underline": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
     "@tiptap/vue-3": "^3.27.1",
+    "@upstash/context7-mcp": "^3.2.3",
     "tailwindcss": "^4.3.1",
     "vue": "^3.5.38",
     "vue-router": "^5.1.0"
