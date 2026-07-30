@@ -67,7 +67,8 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const isLoggedIn = !!localStorage.getItem('gnsw_user')
+  const token = localStorage.getItem('portal_token')
+  const isLoggedIn = !!token
   if (to.meta.requiresAuth && !isLoggedIn) {
     return { name: 'Login' }
   }

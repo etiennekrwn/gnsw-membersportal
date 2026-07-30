@@ -31,16 +31,14 @@
 
       <button
         @click="handleLogin"
-        class="w-full bg-[#111418] hover:bg-gray-800 text-white text-sm font-medium rounded-md py-2.5 transition-colors cursor-pointer"
+        :disabled="isSubmitting"
+        class="w-full bg-[#111418] hover:bg-gray-800 text-white text-sm font-medium rounded-md py-2.5 transition-colors cursor-pointer disabled:opacity-50"
       >
-        Sign in
+        {{ isSubmitting ? 'Signing In...' : 'Sign in' }}
       </button>
 
       <div class="mt-6 pt-5 border-t border-[#eae8e4] text-xs text-gray-400 space-y-1">
-        <p class="font-medium text-gray-500">Test accounts:</p>
-        <p>Associate — adaeze@gnsw.ng / associate123</p>
-        <p>Partner — emeka@gnsw.ng / partner123</p>
-        <p>Fellow — funmi@gnsw.ng / fellow123</p>
+        <p class="font-medium text-gray-500">Sign in with your GNSW credentials</p>
       </div>
 
     </div>
@@ -50,25 +48,47 @@
 <script setup>
 import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
-import { mockUsers } from '../data/mockUsers.js'
+import apiClient from '../api/client.js'
 
 const setCurrentUser = inject('setCurrentUser')
 const router = useRouter()
 
 const loginError = ref('')
+const isSubmitting = ref(false)
 const form = ref({ email: '', password: '' })
 
-function handleLogin() {
+async function handleLogin() {
   loginError.value = ''
-  const user = mockUsers.find(
-    u => u.email === form.value.email && u.password === form.value.password
-  )
-  if (user) {
-    setCurrentUser(user)
+  isSubmitting.value = true
+
+  try {
+    const response = await apiClient.post('/public/auth/login', {
+      username: form.value.email,
+      password: form.value.password,
+    })
+
+    const { accessToken, user } = response.data.data
+
+    // Store JWT token
+    localStorage.setItem('portal_token', accessToken)
+    localStorage.setItem('portal_user', JSON.stringify(user))
+
+    // Set the current user for the portal's reactive state
+    setCurrentUser({
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      tier: user.role,
+      tierLabel: user.tier,
+      initials: (user.firstName?.[0] || '') + (user.lastName?.[0] || ''),
+      joinDate: null,
+    })
+
     router.push('/')
-  } else {
-    loginError.value = 'Invalid email or password.'
+  } catch (err) {
+    loginError.value = err.message || 'Invalid email or password.'
+  } finally {
+    isSubmitting.value = false
   }
 }
 </script>
-

@@ -1,14 +1,14 @@
 <script setup>
 import { ref, inject, onMounted, computed } from 'vue'
 import { Icon } from '@iconify/vue'
-import { getDrafts, getPublished } from '../data/writing.js'
-import { loadProfile, saveProfile } from '../data/userProfile.js'
+import apiClient from '../api/client.js'
 
 const currentUser = inject('currentUser')
 
 // Profile edit state
 const isEditing = ref(false)
 const saved = ref(false)
+const loading = ref(true)
 
 // Profile form fields
 const displayName = ref('')
@@ -22,6 +22,9 @@ const twitter = ref('')
 const linkedin = ref('')
 const email = ref('')
 const avatarPreview = ref(null)
+const professionalId = ref('')
+const tier = ref('')
+const memberSince = ref('')
 
 // Stats
 const draftsCount = ref(0)
@@ -43,30 +46,38 @@ const specializationOptions = [
   'Religious',
 ]
 
-function loadProfileData() {
-  if (!currentUser) return
-  const savedProfile = loadProfile()
-  const profile = savedProfile || currentUser
+async function loadProfileData() {
+  loading.value = true
+  try {
+    const response = await apiClient.get('/members/profile')
+    const profile = response.data.data
 
-  displayName.value = profile.displayName || currentUser.name || ''
-  bio.value = profile.bio || ''
-  currentRole.value = profile.currentRole || ''
-  employer.value = profile.employer || ''
-  yearsExperience.value = profile.yearsExperience || ''
-  specializations.value = profile.specializations || []
-  website.value = profile.website || ''
-  twitter.value = profile.twitter || ''
-  linkedin.value = profile.linkedin || ''
-  email.value = profile.email || currentUser.email || ''
-  avatarPreview.value = profile.avatar || null
+    // Build display name from first + last name
+    const firstName = profile.firstName || ''
+    const lastName = profile.lastName || ''
+    displayName.value = `${firstName} ${lastName}`.trim() || currentUser?.name || ''
+    bio.value = profile.bio || ''
+    email.value = profile.email || currentUser?.email || ''
+    professionalId.value = profile.professionalId || ''
+    tier.value = profile.tier || ''
+    memberSince.value = profile.memberSince
+      ? new Date(profile.memberSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      : 'N/A'
 
-  const drafts = getDrafts()
-  const published = getPublished()
-  draftsCount.value = drafts.length
-  publishedCount.value = published.length
-  totalViews.value = published.reduce((sum, p) => sum + (p.views || 0), 0)
-  totalClaps.value = published.reduce((sum, p) => sum + (p.claps || 0), 0)
-  recentActivity.value = published.slice(0, 4)
+    // Set optional fields from member profile
+    employer.value = profile.organisation || ''
+    if (profile.sectors) {
+      specializations.value = profile.sectors.split(',').map(s => s.trim())
+    }
+
+  } catch (err) {
+    console.error('Failed to load profile:', err)
+    // Fallback to currentUser data
+    displayName.value = currentUser?.name || ''
+    email.value = currentUser?.email || ''
+  } finally {
+    loading.value = false
+  }
 }
 
 function startEditing() {
@@ -81,6 +92,7 @@ function cancelEditing() {
 }
 
 function saveProfileData() {
+  // For now, save locally since the backend doesn't have a profile update endpoint yet
   const profileData = {
     displayName: displayName.value,
     bio: bio.value,
@@ -94,7 +106,7 @@ function saveProfileData() {
     email: email.value,
     avatar: avatarPreview.value,
   }
-  saveProfile(profileData)
+  localStorage.setItem('portal_profile', JSON.stringify(profileData))
   isEditing.value = false
   saved.value = true
   setTimeout(() => { saved.value = false }, 2500)
@@ -136,9 +148,7 @@ const initials = computed(() => {
     .toUpperCase()
 })
 
-const memberSince = computed(() => {
-  return currentUser?.joinDate || new Date().toLocaleDateString()
-})
+// memberSince is now loaded from the API as a ref
 
 const hasAnyProfessional = computed(() => {
   return currentRole.value || employer.value || yearsExperience.value || specializations.value.length
