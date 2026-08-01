@@ -91,25 +91,25 @@ function cancelEditing() {
   loadProfileData()
 }
 
-function saveProfileData() {
-  // For now, save locally since the backend doesn't have a profile update endpoint yet
-  const profileData = {
-    displayName: displayName.value,
-    bio: bio.value,
-    currentRole: currentRole.value,
-    employer: employer.value,
-    yearsExperience: yearsExperience.value,
-    specializations: specializations.value,
-    website: website.value,
-    twitter: twitter.value,
-    linkedin: linkedin.value,
-    email: email.value,
-    avatar: avatarPreview.value,
+async function saveProfileData() {
+  try {
+    await apiClient.put('/members/profile', {
+      organisation: employer.value,
+      bio: bio.value,
+      sectors: specializations.value.join(', '),
+      phone: '',
+      speechTypes: '',
+      languages: '',
+      zone: '',
+      profileImageUrl: null,
+    })
+    isEditing.value = false
+    saved.value = true
+    setTimeout(() => { saved.value = false }, 2500)
+  } catch (err) {
+    console.error('Failed to save profile:', err)
+    alert('Failed to save profile: ' + (err.message || 'Unknown error'))
   }
-  localStorage.setItem('portal_profile', JSON.stringify(profileData))
-  isEditing.value = false
-  saved.value = true
-  setTimeout(() => { saved.value = false }, 2500)
 }
 
 function handleAvatarUpload(e) {

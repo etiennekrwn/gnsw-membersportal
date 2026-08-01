@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import PortalLayout from '../layout/portallayout.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Login from '../pages/Login.vue'
+import SetPassword from '../pages/SetPassword.vue'
 import Events from '../pages/Events.vue'
 import EventDetail from '../components/events/Eventdetail.vue'
 import Article from '../pages/Article.vue'
@@ -18,6 +19,7 @@ import SearchResults from '../pages/SearchResults.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: Login },
+  { path: '/set-password', name: 'SetPassword', component: SetPassword },
 
   // Editor routes — full screen, no layout wrapper
   {
@@ -67,6 +69,9 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
+  // Allow access to set-password without authentication
+  if (to.name === 'SetPassword') return true
+
   const token = localStorage.getItem('portal_token')
   const isLoggedIn = !!token
   if (to.meta.requiresAuth && !isLoggedIn) {
