@@ -29,6 +29,12 @@ coverage
 .env.local
 .env.production
 
+# Editor/security artifacts (not real code)
+.git_disabled/
+.cursor/
+gk/
+fsmonitor--daemon/
+
 *.tsbuildinfo
 
 .eslintcache
