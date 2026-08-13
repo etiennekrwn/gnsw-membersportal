@@ -19,7 +19,13 @@
         {{ success }}
       </div>
 
-      <form @submit.prevent="handleSetPassword" v-if="!success" class="space-y-4">
+      <!-- Loading state while validating the token -->
+      <div v-if="checkingToken" class="text-center py-6">
+        <div class="inline-block w-8 h-8 border-4 border-[#eae8e4] border-t-[#8b1e21] rounded-full animate-spin mb-3"></div>
+        <p class="text-sm text-gray-500">Checking your activation link...</p>
+      </div>
+
+      <form @submit.prevent="handleSetPassword" v-if="!success && !checkingToken && tokenValid" class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1.5">Choose a Username</label>
           <input
@@ -73,6 +79,13 @@
           Go to Login
         </router-link>
       </div>
+
+      <!-- Shown when the token is invalid, used, or expired -->
+      <div v-if="!checkingToken && !tokenValid && !success" class="text-center pt-2">
+        <router-link to="/login" class="inline-block w-full bg-[#111418] hover:bg-gray-800 text-white text-sm font-medium rounded-md py-2.5 transition-colors">
+          Go to Login
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -96,12 +109,35 @@ const isSubmitting = ref(false)
 const token = ref('')
 const email = ref('')
 const usernameError = ref('')
+const tokenValid = ref(false)
+const checkingToken = ref(true)
 
-onMounted(() => {
+onMounted(async () => {
   token.value = route.query.token || ''
   email.value = route.query.email || ''
   if (!token.value) {
     error.value = 'Invalid or missing activation token. Please check the link in your email.'
+    checkingToken.value = false
+    return
+  }
+
+  // Validate the activation token with the server BEFORE showing the form.
+  // This makes the link immediately non-functional once the password has been set,
+  // while keeping it usable if the user has not yet completed setup.
+  try {
+    const res = await apiClient.get('/public/auth/set-password/validate', {
+      params: { token: token.value },
+    })
+    const data = res.data?.data
+    if (data && data.valid) {
+      tokenValid.value = true
+    } else {
+      error.value = data?.message || 'This activation link is no longer valid.'
+    }
+  } catch (err) {
+    error.value = err.message || 'Unable to verify your activation link. Please try again.'
+  } finally {
+    checkingToken.value = false
   }
 })
 
