@@ -20,5 +20,6 @@ provide('handleSignout', () => {
   currentUser.value = null
   localStorage.removeItem('portal_user')
   localStorage.removeItem('portal_token')
+  localStorage.removeItem('portal_onboarding_completed')
 })
 </script>

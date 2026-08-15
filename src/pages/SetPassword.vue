@@ -81,7 +81,15 @@
       </div>
 
       <!-- Shown when the token is invalid, used, or expired -->
-      <div v-if="!checkingToken && !tokenValid && !success" class="text-center pt-2">
+      <div v-if="!checkingToken && !tokenValid && !success" class="text-center pt-2 space-y-2">
+        <button
+          v-if="tokenStatus === 'EXPIRED'"
+          @click="handleResend"
+          :disabled="isResending"
+          class="w-full bg-[#8b1e21] hover:bg-[#741a1d] text-white text-sm font-medium rounded-md py-2.5 transition-colors cursor-pointer disabled:opacity-50"
+        >
+          {{ isResending ? 'Sending...' : 'Resend my link' }}
+        </button>
         <router-link to="/login" class="inline-block w-full bg-[#111418] hover:bg-gray-800 text-white text-sm font-medium rounded-md py-2.5 transition-colors">
           Go to Login
         </router-link>
@@ -111,6 +119,8 @@ const email = ref('')
 const usernameError = ref('')
 const tokenValid = ref(false)
 const checkingToken = ref(true)
+const tokenStatus = ref('')
+const isResending = ref(false)
 
 onMounted(async () => {
   token.value = route.query.token || ''
@@ -129,6 +139,7 @@ onMounted(async () => {
       params: { token: token.value },
     })
     const data = res.data?.data
+    tokenStatus.value = data?.status || ''
     if (data && data.valid) {
       tokenValid.value = true
     } else {
@@ -140,6 +151,23 @@ onMounted(async () => {
     checkingToken.value = false
   }
 })
+
+async function handleResend() {
+  isResending.value = true
+  try {
+    const res = await apiClient.post('/public/auth/resend-activation', {
+      email: email.value,
+    })
+    const data = res.data?.data || {}
+    error.value = ''
+    success.value = data.message || 'A new activation link has been sent to your email.'
+    tokenValid.value = false
+  } catch (err) {
+    error.value = err.message || 'Unable to send a new link. Please try again.'
+  } finally {
+    isResending.value = false
+  }
+}
 
 async function handleSetPassword() {
   error.value = ''

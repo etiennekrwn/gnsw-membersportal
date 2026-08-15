@@ -3,6 +3,9 @@ import PortalLayout from '../layout/portallayout.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Login from '../pages/Login.vue'
 import SetPassword from '../pages/SetPassword.vue'
+import ForgotPassword from '../pages/ForgotPassword.vue'
+import ResetPassword from '../pages/ResetPassword.vue'
+import Onboarding from '../pages/Onboarding.vue'
 import Events from '../pages/Events.vue'
 import EventDetail from '../components/events/Eventdetail.vue'
 import Article from '../pages/Article.vue'
@@ -20,6 +23,16 @@ import SearchResults from '../pages/SearchResults.vue'
 const routes = [
   { path: '/login', name: 'Login', component: Login },
   { path: '/set-password', name: 'SetPassword', component: SetPassword },
+  { path: '/forgot-password', name: 'ForgotPassword', component: ForgotPassword },
+  { path: '/reset-password', name: 'ResetPassword', component: ResetPassword },
+
+  // First-login onboarding — requires auth but must be outside the portal layout
+  {
+    path: '/onboarding',
+    name: 'Onboarding',
+    component: Onboarding,
+    meta: { requiresAuth: true },
+  },
 
   // Editor routes — full screen, no layout wrapper
   {
@@ -69,15 +82,27 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  // Allow access to set-password without authentication
-  if (to.name === 'SetPassword') return true
+  // Allow access to public auth pages without authentication
+  if (to.name === 'SetPassword' || to.name === 'ForgotPassword' || to.name === 'ResetPassword') return true
 
   const token = localStorage.getItem('portal_token')
   const isLoggedIn = !!token
+
+  // Require login for protected routes
   if (to.meta.requiresAuth && !isLoggedIn) {
     return { name: 'Login' }
   }
-  if (to.name === 'Login' && isLoggedIn) {
+
+  const onboardingCompleted = localStorage.getItem('portal_onboarding_completed') === 'true'
+
+  // If logged in and onboarding not yet completed, force onboarding
+  // (except when already on the onboarding page or logging out)
+  if (isLoggedIn && !onboardingCompleted && to.name !== 'Onboarding' && to.name !== 'Login') {
+    return { name: 'Onboarding' }
+  }
+
+  // If logged in and onboarding done, send them away from auth pages to dashboard
+  if (to.name === 'Login' && isLoggedIn && onboardingCompleted) {
     return { name: 'Dashboard' }
   }
 })
