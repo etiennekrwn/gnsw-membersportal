@@ -468,7 +468,7 @@ onBeforeRouteLeave((_to, _from, next) => {
 <template>
   <!-- Top bar -->
   <div class="max-w-7xl m-auto fixed top-0 inset-x-0 z-30 bg-white flex items-center justify-between px-6 h-14">
-    <span class="font-['Playfair_Display'] font-extrabold text-[#111418] tracking-tight text-3xl select-none">GNSW.</span>
+    <span class="font-['Playfair_Display'] font-extrabold text-[#111418] tracking-tight text-3xl select-none">The Guild.</span>
 
     <div class="flex items-center gap-2">
       <!-- Save status -->

@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-[#faf9f5] flex items-center justify-center px-4">
     <div class="bg-white border border-[#eae8e4] rounded-lg p-10 w-full max-w-sm">
 
-      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] text-center mb-1">GNSW</h1>
+      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] text-center mb-1">The Guild</h1>
       <p class="text-sm text-gray-400 text-center mb-8">Guild of Nigerian Speechwriters</p>
 
       <div v-if="loginError" class="bg-red-50 border border-red-200 text-[#8b1e21] text-sm rounded-md px-4 py-3 mb-5">

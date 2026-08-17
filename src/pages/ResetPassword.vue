@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-[#faf9f5] flex items-center justify-center px-4">
     <div class="bg-white border border-[#eae8e4] rounded-lg p-10 w-full max-w-sm">
 
-      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] text-center mb-1">GNSW</h1>
+      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] text-center mb-1">The Guild</h1>
       <p class="text-sm text-gray-400 text-center mb-8">Choose a new password</p>
 
       <div v-if="error" class="bg-red-50 border border-red-200 text-[#8b1e21] text-sm rounded-md px-4 py-3 mb-5">
@@ -19,7 +19,6 @@
           <input
             v-model="form.password"
             type="password"
-            placeholder="Min. 8 characters"
             required
             minlength="8"
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
@@ -31,7 +30,6 @@
           <input
             v-model="form.passwordConfirmation"
             type="password"
-            placeholder="Repeat your new password"
             required
             minlength="8"
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"

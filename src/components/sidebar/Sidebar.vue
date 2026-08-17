@@ -58,7 +58,7 @@ const navItems = [
         <Icon icon="lucide:menu" width="22" height="22" />
       </button>
       <span class="font-['Playfair_Display'] text-3xl font-extrabold text-[#111418]">
-        GNSW<span class="text-4xl">.</span>
+        The Guild<span class="text-4xl">.</span>
       </span>
     </div>
 

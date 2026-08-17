@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-[#faf9f5] flex items-center justify-center px-4">
     <div class="bg-white border border-[#eae8e4] rounded-lg p-10 w-full max-w-md">
 
-      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] text-center mb-1">GNSW</h1>
+      <h1 class="font-['Playfair_Display'] text-3xl font-bold text-[#111418] text-center mb-1">The Guild</h1>
       <p class="text-sm text-gray-400 text-center mb-4">Set Your Password</p>
 
       <!-- Display the email this password belongs to -->
@@ -31,14 +31,12 @@
           <input
             v-model="form.username"
             type="text"
-            placeholder="e.g. john_doe (3-20 chars, lowercase, no spaces)"
             required
             minlength="3"
             maxlength="20"
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
           />
           <p v-if="usernameError" class="text-[11px] text-red-600 mt-1">{{ usernameError }}</p>
-          <p v-else class="text-[10px] text-gray-400 mt-1">Lowercase letters, numbers, _ and - only. No spaces.</p>
         </div>
 
         <div>
@@ -46,7 +44,6 @@
           <input
             v-model="form.password"
             type="password"
-            placeholder="Min. 8 characters"
             required
             minlength="8"
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
@@ -58,7 +55,6 @@
           <input
             v-model="form.passwordConfirmation"
             type="password"
-            placeholder="Repeat your password"
             required
             minlength="8"
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
