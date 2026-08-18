@@ -14,7 +14,6 @@
         <input
           v-model="form.email"
           type="email"
-          placeholder="your@email.com"
           class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
         />
       </div>
@@ -24,7 +23,6 @@
         <input
           v-model="form.password"
           type="password"
-          placeholder="••••••••"
           class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
         />
       </div>
@@ -49,7 +47,6 @@
           <input
             v-model="resendEmail"
             type="email"
-            placeholder="your@email.com"
             class="flex-1 border border-[#eae8e4] rounded-md px-3 py-2 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
           />
           <button
@@ -82,10 +79,6 @@
       >
         {{ isSubmitting ? 'Signing In...' : 'Sign in' }}
       </button>
-
-      <div class="mt-6 pt-5 border-t border-[#eae8e4] text-xs text-gray-400 space-y-1">
-        <p class="font-medium text-gray-500">Sign in with your GNSW credentials</p>
-      </div>
 
     </div>
   </div>

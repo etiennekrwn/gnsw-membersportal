@@ -54,7 +54,6 @@ function setCategory(category) {
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search courses..."
             class="w-full pl-9 pr-4 py-2 text-sm border border-[#eae8e4] rounded-md focus:outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] transition bg-white"
           />
         </div>

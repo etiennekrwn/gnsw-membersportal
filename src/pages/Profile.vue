@@ -261,8 +261,7 @@ onMounted(() => {
             <input
               v-model="displayName"
               type="text"
-              placeholder="Your display name"
-              class="w-full font-serif text-[28px] leading-tight text-[#1a1a1a] bg-transparent border-b-2 border-[#8b1e21]/30 focus:border-[#8b1e21] outline-none pb-1 transition-colors placeholder:text-slate-300"
+              class="w-full font-serif text-[28px] leading-tight text-[#1a1a1a] bg-transparent border-b-2 border-[#8b1e21]/30 focus:border-[#8b1e21] outline-none pb-1 transition-colors"
             />
           </div>
           <h1 v-else class="font-serif text-[28px] leading-tight text-[#1a1a1a] mb-1.5 truncate">{{ displayName || currentUser?.name || 'Member' }}</h1>
@@ -293,15 +292,15 @@ onMounted(() => {
           <div v-if="isEditing" class="space-y-3 mb-5">
             <label class="block">
               <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 block">Email</span>
-              <input v-model="email" type="email" placeholder="your@email.com" class="w-full text-[12.5px] text-[#1a1a1a] border border-[#eae8e4] px-3 py-2 outline-none focus:border-[#8b1e21] bg-white transition-colors placeholder:text-slate-300" />
+              <input v-model="email" type="email" class="w-full text-[12.5px] text-[#1a1a1a] border border-[#eae8e4] px-3 py-2 outline-none focus:border-[#8b1e21] bg-white transition-colors" />
             </label>
             <label class="block">
               <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 block">Website / Socials</span>
-              <input v-model="socials" type="text" placeholder="https://yoursite.com or @twitter" class="w-full text-[12.5px] text-[#1a1a1a] border border-[#eae8e4] px-3 py-2 outline-none focus:border-[#8b1e21] bg-white transition-colors placeholder:text-slate-300" />
+              <input v-model="socials" type="text" class="w-full text-[12.5px] text-[#1a1a1a] border border-[#eae8e4] px-3 py-2 outline-none focus:border-[#8b1e21] bg-white transition-colors" />
             </label>
             <label class="block">
               <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1 block">LinkedIn</span>
-              <input v-model="linkedin" type="url" placeholder="https://linkedin.com/in/..." class="w-full text-[12.5px] text-[#1a1a1a] border border-[#eae8e4] px-3 py-2 outline-none focus:border-[#8b1e21] bg-white transition-colors placeholder:text-slate-300" />
+              <input v-model="linkedin" type="url" class="w-full text-[12.5px] text-[#1a1a1a] border border-[#eae8e4] px-3 py-2 outline-none focus:border-[#8b1e21] bg-white transition-colors" />
             </label>
           </div>
 
@@ -338,8 +337,7 @@ onMounted(() => {
             <textarea
               v-model="bio"
               rows="4"
-              placeholder="Tell the Guild about yourself — your background, expertise, and what drives you as a writer..."
-              class="w-full text-sm text-slate-700 border border-[#eae8e4] px-4 py-3 resize-none outline-none focus:border-[#8b1e21] bg-white transition-colors placeholder:text-slate-300"
+              class="w-full text-sm text-slate-700 border border-[#eae8e4] px-4 py-3 resize-none outline-none focus:border-[#8b1e21] bg-white transition-colors"
             />
             <div class="flex justify-between items-center mt-1.5 mb-6">
               <p class="text-xs text-slate-400">A strong bio helps other members find and connect with you.</p>

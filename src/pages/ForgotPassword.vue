@@ -19,7 +19,6 @@
           <input
             v-model="email"
             type="email"
-            placeholder="your@email.com"
             required
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
           />

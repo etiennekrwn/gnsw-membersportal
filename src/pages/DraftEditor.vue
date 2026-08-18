@@ -528,7 +528,6 @@ onBeforeRouteLeave((_to, _from, next) => {
       <input
         v-model="title"
         type="text"
-        placeholder="Name your blog"
         :class="[
           'draft-title-input w-full text-[1rem] font-normal text-[#111418] placeholder-gray-300 border outline-none mb-1 bg-transparent leading-tight px-3 py-2 focus:ring-1 transition',
           fieldErrors.title ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-[#8b1e21] focus:ring-[#8b1e21]'
@@ -696,7 +695,6 @@ onBeforeRouteLeave((_to, _from, next) => {
           <input
             v-model="tagInput"
             type="text"
-            placeholder="Add a tag…"
             maxlength="30"
             class="flex-1 border border-gray-300 bg-white px-3 py-2 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] transition"
             @keydown.enter.prevent="addTag"
@@ -718,7 +716,6 @@ onBeforeRouteLeave((_to, _from, next) => {
         <textarea
           v-model="excerpt"
           rows="3"
-          placeholder="A short summary of this piece…"
           class="w-full border border-gray-300 bg-white px-3 py-2.5 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] resize-none transition"
           @input="scheduleSave"
         />

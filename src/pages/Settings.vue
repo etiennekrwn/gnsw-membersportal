@@ -364,7 +364,6 @@ onMounted(() => {
                 <input
                   v-model="currentPassword"
                   type="password"
-                  placeholder="Enter current password"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
                 />
               </div>
@@ -373,7 +372,6 @@ onMounted(() => {
                 <input
                   v-model="newPassword"
                   type="password"
-                  placeholder="At least 6 characters"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
                 />
               </div>
@@ -382,7 +380,6 @@ onMounted(() => {
                 <input
                   v-model="confirmPassword"
                   type="password"
-                  placeholder="Repeat new password"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
                 />
               </div>

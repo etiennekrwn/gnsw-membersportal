@@ -283,8 +283,7 @@ const submitComment = () => {
             <textarea
               v-model="commentDraft"
               rows="3"
-              placeholder="Share your thoughts..."
-              class="w-full text-sm text-[#111418] placeholder:text-slate-400 border border-[#eae8e4] rounded-lg px-4 py-3 resize-none focus:outline-none focus:border-[#8b1e21]/40 transition-colors"
+              class="w-full text-sm text-[#111418] border border-[#eae8e4] rounded-lg px-4 py-3 resize-none focus:outline-none focus:border-[#8b1e21]/40 transition-colors"
             />
             <div class="mt-2 flex justify-end">
               <button
