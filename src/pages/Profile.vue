@@ -252,7 +252,7 @@ onMounted(() => {
             </span>
             <span class="w-[3px] h-[3px] rounded-full bg-slate-300"></span>
             <span class="text-[10.5px] uppercase tracking-widest text-slate-300">
-              {{ professionalId || currentUser?.tierShort || 'GNSW-MEMBER' }}
+              {{ currentUser?.professionalId || professionalId || currentUser?.tierShort || 'GNSW-MEMBER' }}
             </span>
           </div>
 

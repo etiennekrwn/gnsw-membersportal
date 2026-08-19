@@ -132,6 +132,7 @@ async function handleLogin() {
       email: user.email,
       tier: user.role,
       tierLabel: user.tier,
+      professionalId: user.professionalId || null,
       initials: (user.firstName?.[0] || '') + (user.lastName?.[0] || ''),
       joinDate: null,
     })

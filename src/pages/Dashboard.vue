@@ -5,6 +5,7 @@ import ArticleCard from '../components/feed/ArticleCard.vue'
 import RightSidebar from '../components/feed/RightSidebar.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
 import PageLoading from '../components/ui/PageLoading.vue'
+import SubscriptionCard from '../components/SubscriptionCard.vue'
 import { mockArticles } from '../data/mockArticles.js'
 import { filterFeedArticles, getSavedArticles } from '../data/feedActions.js'
 
@@ -76,6 +77,7 @@ watch(activeTab, () => {
     <div class="flex gap-8">
 
       <div class="flex-1 min-w-0">
+        <SubscriptionCard v-if="!isGuest" class="mb-6" />
         <FeedTabs v-model:activeTab="activeTab" />
 
         <!-- Guest prompt banner (dismissible) -->
