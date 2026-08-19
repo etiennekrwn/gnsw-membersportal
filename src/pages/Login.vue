@@ -10,10 +10,10 @@
       </div>
 
       <div class="mb-4">
-        <label class="block text-xs font-medium text-gray-600 mb-1.5">Email</label>
+        <label class="block text-xs font-medium text-gray-600 mb-1.5">Username or Email</label>
         <input
-          v-model="form.email"
-          type="email"
+          v-model="form.username"
+          type="text"
           class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
         />
       </div>
@@ -86,15 +86,19 @@
 
 <script setup>
 import { ref, inject } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../api/client.js'
 
 const setCurrentUser = inject('setCurrentUser')
 const router = useRouter()
+const route = useRoute()
+
+// Where the guest should land after logging in (originally gated by the wall)
+const redirectPath = route.query.redirect ? decodeURIComponent(String(route.query.redirect)) : ''
 
 const loginError = ref('')
 const isSubmitting = ref(false)
-const form = ref({ email: '', password: '' })
+const form = ref({ username: '', password: '' })
 
 // Resend activation link
 const showResend = ref(false)
@@ -108,7 +112,7 @@ async function handleLogin() {
 
   try {
     const response = await apiClient.post('/public/auth/login', {
-      username: form.value.email,
+      username: form.value.username,
       password: form.value.password,
     })
 
@@ -132,9 +136,9 @@ async function handleLogin() {
       joinDate: null,
     })
 
-    router.push('/')
+    router.push(redirectPath && !redirectPath.startsWith('/login') ? redirectPath : '/')
   } catch (err) {
-    loginError.value = err.message || 'Invalid email or password.'
+    loginError.value = err.message || 'Invalid username or password.'
   } finally {
     isSubmitting.value = false
   }

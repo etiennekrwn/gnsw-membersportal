@@ -81,16 +81,23 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
-  // Allow access to public auth pages without authentication
-  if (to.name === 'SetPassword' || to.name === 'ForgotPassword' || to.name === 'ResetPassword') return true
+// Public pages that anyone can browse: feed, article previews, and auth pages.
+// Visitors can see the feed (enticement) but member-only actions are gated
+// in-app by the login wall.
+const PUBLIC_ROUTES = new Set(['Login', 'SetPassword', 'ForgotPassword', 'ResetPassword', 'Dashboard', 'Article', 'NotFound'])
 
+router.beforeEach((to) => {
   const token = localStorage.getItem('portal_token')
   const isLoggedIn = !!token
 
-  // Require login for protected routes
+  // Public pages are browsable without an account
+  if (PUBLIC_ROUTES.has(to.name)) {
+    return true
+  }
+
+  // Require login for member pages (remember where they were headed)
   if (to.meta.requiresAuth && !isLoggedIn) {
-    return { name: 'Login' }
+    return { name: 'Login', query: { redirect: to.fullPath } }
   }
 
   const onboardingCompleted = localStorage.getItem('portal_onboarding_completed') === 'true'

@@ -33,7 +33,7 @@ function onKeydown(event) {
       v-model="query"
       type="search"
       aria-label="Search articles, courses, and events"
-      class="bg-transparent outline-none text-sm text-[#111418] placeholder-gray-400 w-full"
+      class="bg-transparent outline-none text-sm text-[#111418] w-full"
       @keydown="onKeydown"
     />
   </div>

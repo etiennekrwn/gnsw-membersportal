@@ -9,6 +9,20 @@ import { mockArticles } from '../data/mockArticles.js'
 import { filterFeedArticles, getSavedArticles } from '../data/feedActions.js'
 
 const currentUser = inject('currentUser')
+const isGuest = computed(() => !currentUser?.value)
+
+const mainSiteUrl = (import.meta.env.VITE_MAIN_SITE_URL || 'http://localhost:5173').replace(/\/$/, '')
+
+// Guest prompt (dismissible) shown after a short browse
+const guestPromptDismissed = ref(localStorage.getItem('gnsw_guest_prompt_dismissed') === 'true')
+const showPrompt = ref(false)
+
+function dismissGuestPrompt() {
+  showPrompt.value = false
+  guestPromptDismissed.value = true
+  localStorage.setItem('gnsw_guest_prompt_dismissed', 'true')
+}
+
 const activeTab = ref('For You')
 const loading = ref(true)
 const loadError = ref(false)
@@ -30,7 +44,12 @@ async function loadArticles() {
   }
 }
 
-onMounted(loadArticles)
+onMounted(() => {
+  loadArticles()
+  setTimeout(() => {
+    if (isGuest.value && !guestPromptDismissed.value) showPrompt.value = true
+  }, 1200)
+})
 
 const tabbedArticles = computed(() => {
   const visible = filterFeedArticles(articles.value)
@@ -58,6 +77,43 @@ watch(activeTab, () => {
 
       <div class="flex-1 min-w-0">
         <FeedTabs v-model:activeTab="activeTab" />
+
+        <!-- Guest prompt banner (dismissible) -->
+        <div
+          v-if="isGuest && showPrompt"
+          class="mb-6 flex flex-col sm:flex-row sm:items-center gap-4 rounded-md border border-[#8b1e21]/20 bg-[#8b1e21]/5 p-4"
+        >
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-[#111418]">You're browsing The Guild</p>
+            <p class="text-xs text-[#555555] mt-0.5">
+              Join to read full articles, clap, comment, and publish your own speechwriting.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <a
+              :href="`${mainSiteUrl}/membership`"
+              target="_blank"
+              rel="noopener"
+              class="px-4 py-2 bg-[#8b1e21] text-white text-xs font-bold uppercase tracking-[1.5px] hover:bg-[#631214] transition-colors no-underline"
+            >
+              Join the Guild
+            </a>
+            <RouterLink
+              to="/login"
+              class="px-4 py-2 text-xs font-bold uppercase tracking-[1.5px] border border-[#8b1e21] text-[#8b1e21] hover:bg-[#8b1e21] hover:text-white transition-colors no-underline"
+            >
+              Log in
+            </RouterLink>
+            <button
+              type="button"
+              class="p-1 text-[#999999] hover:text-[#111418] transition-colors cursor-pointer bg-transparent border-0"
+              aria-label="Dismiss"
+              @click="dismissGuestPrompt"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
 
         <PageLoading v-if="loading" />
 

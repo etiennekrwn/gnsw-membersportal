@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { getArticleById, getRelatedArticles, mockArticles } from '../data/mockArticles.js'
@@ -7,6 +7,11 @@ import ArticleBody from '../components/article/ArticleBody.vue'
 
 const route = useRoute()
 const shareMessage = ref("")
+
+// Guest browsing: visitors see a preview, then the login wall gates member actions.
+const currentUser = inject('currentUser')
+const openWall = inject('openWall')
+const isGuest = computed(() => !currentUser?.value)
 
 // Current article
 const post = computed(() => getArticleById(route.params.id))
@@ -19,6 +24,7 @@ const isLiked = ref(false)
 const likeCount = ref(post.value?.likes ?? 42)
 
 const toggleLike = () => {
+  if (isGuest.value) return openWall({ kind: 'like' })
   isLiked.value = !isLiked.value
   likeCount.value += isLiked.value ? 1 : -1
 }
@@ -82,6 +88,7 @@ const comments = ref([
 const commentCount = computed(() => comments.value.length)
 
 const submitComment = () => {
+  if (isGuest.value) return openWall({ kind: 'comment' })
   const text = commentDraft.value.trim()
   if (!text) return
 
@@ -200,9 +207,30 @@ const submitComment = () => {
         />
       </div>
 
-      <!-- Article body -->
+      <!-- Article body (guests see a preview + login wall) -->
       <article>
-        <ArticleBody :blocks="post.body" />
+        <div v-if="isGuest" class="relative">
+          <div class="max-h-[480px] overflow-hidden">
+            <ArticleBody :blocks="post.body" />
+          </div>
+          <div
+            class="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end pt-24 pb-8 bg-gradient-to-t from-white via-white/85 to-transparent"
+          >
+            <p class="mb-3 px-6 text-center text-xs text-[#555555]">
+              Continue reading this article with a Guild membership.
+            </p>
+            <button
+              type="button"
+              @click="openWall({ kind: 'article' })"
+              class="px-6 py-3 bg-[#8b1e21] text-white text-xs font-bold uppercase tracking-[1.5px] hover:bg-[#631214] transition-colors"
+            >
+              Continue Reading
+            </button>
+          </div>
+        </div>
+        <div v-else>
+          <ArticleBody :blocks="post.body" />
+        </div>
 
         <!-- Tags -->
         <div class="mt-12 pt-8 border-t border-[#eae8e4] flex flex-wrap items-center gap-2">

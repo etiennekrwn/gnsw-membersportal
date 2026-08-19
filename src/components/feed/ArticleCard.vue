@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import {
@@ -14,6 +14,10 @@ import {
 const props = defineProps({
   article: { type: Object, required: true },
 })
+
+const currentUser = inject('currentUser')
+const openWall = inject('openWall')
+const isGuest = computed(() => !currentUser?.value)
 
 const router = useRouter()
 const saved = ref(isArticleSaved(props.article.id))
@@ -47,6 +51,7 @@ function flash(message) {
 function onSave(event) {
   event.preventDefault()
   event.stopPropagation()
+  if (isGuest.value) return openWall({ kind: 'save' })
   saved.value = toggleSaveArticle(props.article.id)
   flash(saved.value ? 'Saved' : 'Removed from saved')
 }
@@ -56,6 +61,7 @@ function onSave(event) {
 function onFollow(event) {
   event.preventDefault()
   event.stopPropagation()
+  if (isGuest.value) return openWall({ kind: 'follow' })
   followed.value = toggleFollowAuthor(props.article.author.name)
   flash(followed.value ? 'Following author' : 'Unfollowed author')
 }

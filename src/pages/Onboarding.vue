@@ -45,13 +45,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
             <p class="text-[11px] text-gray-500 font-medium">Upload your photo</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">A clear photo of your face</p>
           </div>
         </div>
       </label>
 
       <p v-if="photoName" class="text-center text-[11px] text-gray-500 mt-2 truncate px-2">{{ photoName }}</p>
-      <p class="text-center text-[10px] text-gray-400 mt-1">JPG, PNG or WebP • Max 5MB • Works on desktop & mobile</p>
 
       <div class="mt-8 space-y-3">
         <button

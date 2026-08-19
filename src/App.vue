@@ -1,9 +1,11 @@
 <template>
   <RouterView />
+  <LoginWall />
 </template>
 
 <script setup>
 import { ref, provide } from 'vue'
+import LoginWall from './components/LoginWall.vue'
 
 // Rehydrate from localStorage on page refresh
 const stored = localStorage.getItem('portal_user')
@@ -21,5 +23,21 @@ provide('handleSignout', () => {
   localStorage.removeItem('portal_user')
   localStorage.removeItem('portal_token')
   localStorage.removeItem('portal_onboarding_completed')
+})
+
+// Guest login-wall state -- visitors browse the feed first,
+// then member-only actions are gated behind this wall.
+const wallOpen = ref(false)
+const wallIntent = ref(null)
+
+provide('wallOpen', wallOpen)
+provide('wallIntent', wallIntent)
+provide('openWall', (intent) => {
+  wallIntent.value = intent || {}
+  wallOpen.value = true
+})
+provide('closeWall', () => {
+  wallOpen.value = false
+  wallIntent.value = null
 })
 </script>

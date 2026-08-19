@@ -1,4 +1,5 @@
 <script setup>
+import { computed, inject } from 'vue'
 import { Icon } from '@iconify/vue'
 
 const props = defineProps({
@@ -7,13 +8,12 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-function closeOnSmallScreen() {
-  if (!window.matchMedia('(min-width: 1024px)').matches) {
-    emit('close')
-  }
-}
+const currentUser = inject('currentUser')
+const isGuest = computed(() => !currentUser?.value)
 
-const navItems = [
+const mainSiteUrl = (import.meta.env.VITE_MAIN_SITE_URL || 'http://localhost:5173').replace(/\/$/, '')
+
+const MEMBER_NAV = [
   { label: 'Home',       to: '/',           icon: 'lucide:house' },
   { label: 'My Writing', to: '/my-writing', icon: 'lucide:pen-line' },
   { label: 'Learning',   to: '/learning',   icon: 'lucide:book-open' },
@@ -21,6 +21,14 @@ const navItems = [
   { label: 'Profile',    to: '/profile',    icon: 'lucide:user' },
   { label: 'Settings',   to: '/settings',   icon: 'lucide:settings' },
 ]
+
+const navItems = computed(() => (isGuest.value ? [{ label: 'Home', to: '/', icon: 'lucide:house' }] : MEMBER_NAV))
+
+function closeOnSmallScreen() {
+  if (!window.matchMedia('(min-width: 1024px)').matches) {
+    emit('close')
+  }
+}
 </script>
 
 <template>
@@ -81,5 +89,18 @@ const navItems = [
         <span>{{ item.label }}</span>
       </RouterLink>
     </nav>
+
+    <!-- Guest join CTA -->
+    <div v-if="isGuest" class="mt-auto px-4 py-4 border-t border-[#eae8e4]">
+      <p class="text-[11px] text-gray-500 mb-2">See what Guild members write - articles, speeches, and ideas.</p>
+      <a
+        :href="`${mainSiteUrl}/membership`"
+        target="_blank"
+        rel="noopener"
+        class="flex items-center justify-center w-full px-4 py-2.5 bg-[#8b1e21] text-white text-xs font-bold uppercase tracking-[1.5px] hover:bg-[#631214] transition-colors no-underline"
+      >
+        Join the Guild
+      </a>
+    </div>
   </aside>
 </template>

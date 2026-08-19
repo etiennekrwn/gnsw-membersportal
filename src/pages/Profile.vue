@@ -340,7 +340,6 @@ onMounted(() => {
               class="w-full text-sm text-slate-700 border border-[#eae8e4] px-4 py-3 resize-none outline-none focus:border-[#8b1e21] bg-white transition-colors"
             />
             <div class="flex justify-between items-center mt-1.5 mb-6">
-              <p class="text-xs text-slate-400">A strong bio helps other members find and connect with you.</p>
               <p class="text-xs font-medium" :class="bio.length > 450 ? 'text-amber-500' : 'text-slate-400'">{{ bio.length }}/500</p>
             </div>
           </div>

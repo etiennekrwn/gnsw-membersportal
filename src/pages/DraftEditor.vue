@@ -12,7 +12,6 @@ import { Table } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
-import Placeholder from '@tiptap/extension-placeholder'
 import {
   getDraftById,
   createDraft,
@@ -135,7 +134,6 @@ const editor = useEditor({
     TableRow,
     TableCell,
     TableHeader,
-    Placeholder.configure({ placeholder: 'Tell your story…' }),
   ],
   content: '',
   onUpdate() {
@@ -529,7 +527,7 @@ onBeforeRouteLeave((_to, _from, next) => {
         v-model="title"
         type="text"
         :class="[
-          'draft-title-input w-full text-[1rem] font-normal text-[#111418] placeholder-gray-300 border outline-none mb-1 bg-transparent leading-tight px-3 py-2 focus:ring-1 transition',
+          'draft-title-input w-full text-[1rem] font-normal text-[#111418] border outline-none mb-1 bg-transparent leading-tight px-3 py-2 focus:ring-1 transition',
           fieldErrors.title ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-[#8b1e21] focus:ring-[#8b1e21]'
         ]"
         @input="scheduleSave(); clearFieldError('title')"
@@ -696,7 +694,7 @@ onBeforeRouteLeave((_to, _from, next) => {
             v-model="tagInput"
             type="text"
             maxlength="30"
-            class="flex-1 border border-gray-300 bg-white px-3 py-2 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] transition"
+            class="flex-1 border border-gray-300 bg-white px-3 py-2 text-sm text-[#111418] outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] transition"
             @keydown.enter.prevent="addTag"
             @keydown.,.prevent="addTag"
           />
@@ -716,7 +714,7 @@ onBeforeRouteLeave((_to, _from, next) => {
         <textarea
           v-model="excerpt"
           rows="3"
-          class="w-full border border-gray-300 bg-white px-3 py-2.5 text-sm text-[#111418] placeholder-gray-300 outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] resize-none transition"
+          class="w-full border border-gray-300 bg-white px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] focus:ring-1 focus:ring-[#8b1e21] resize-none transition"
           @input="scheduleSave"
         />
       </div>
@@ -865,13 +863,6 @@ onBeforeRouteLeave((_to, _from, next) => {
   color: #111418;
   font-size: 1rem;
   line-height: 1.75;
-}
-.editor-body :deep(.ProseMirror p.is-editor-empty:first-child::before) {
-  content: attr(data-placeholder);
-  color: #d1d5db;
-  pointer-events: none;
-  float: left;
-  height: 0;
 }
 .editor-body :deep(h2) {
   font-size: 1.5rem;
