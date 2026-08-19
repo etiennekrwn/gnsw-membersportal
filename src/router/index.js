@@ -100,16 +100,9 @@ router.beforeEach((to) => {
     return { name: 'Login', query: { redirect: to.fullPath } }
   }
 
-  const onboardingCompleted = localStorage.getItem('portal_onboarding_completed') === 'true'
-
-  // If logged in and onboarding not yet completed, force onboarding
-  // (except when already on the onboarding page or logging out)
-  if (isLoggedIn && !onboardingCompleted && to.name !== 'Onboarding' && to.name !== 'Login') {
-    return { name: 'Onboarding' }
-  }
-
-  // If logged in and onboarding done, send them away from auth pages to dashboard
-  if (to.name === 'Login' && isLoggedIn && onboardingCompleted) {
+  // If logged in, never show the login page (onboarding is NOT forced -
+  // it stays available at /onboarding and from the profile)
+  if (to.name === 'Login' && isLoggedIn) {
     return { name: 'Dashboard' }
   }
 })
