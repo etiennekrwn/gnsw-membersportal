@@ -6,6 +6,9 @@
 <script setup>
 import { ref, provide } from 'vue'
 import LoginWall from './components/LoginWall.vue'
+import { initTheme } from './utils/theme.js'
+
+initTheme()
 
 // Rehydrate from localStorage on page refresh
 const stored = localStorage.getItem('portal_user')

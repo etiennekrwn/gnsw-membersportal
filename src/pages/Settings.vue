@@ -1,11 +1,15 @@
-<script setup>
-import { ref, onMounted, inject } from 'vue'
+﻿<script setup>
+import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
-import { loadSettings, saveSettings, getDefaultSettings } from '../data/userProfile.js'
+import apiClient, {
+  getMyPreferences,
+  updateMyPreferences,
+  changeMyPassword,
+  requestAccountDeletion,
+} from '../api/client.js'
+import { setTheme, getTheme, applyTheme } from '../utils/theme.js'
 
-const currentUser = inject('currentUser')
-
-// Settings state
+// Settings state (loaded from the real API â€” no privacy section)
 const settings = ref({
   notifications: {
     emailNotifications: true,
@@ -14,13 +18,8 @@ const settings = ref({
     commentAlerts: true,
     memberAnnouncements: false,
   },
-  privacy: {
-    showInDirectory: true,
-    showWritingActivity: true,
-    showEmailToMembers: false,
-  },
   preferences: {
-    darkMode: false,
+    darkMode: getTheme() === 'dark',
     fontSize: 'medium',
   },
 })
@@ -34,20 +33,67 @@ const newPassword = ref('')
 const confirmPassword = ref('')
 const passwordError = ref('')
 const passwordSuccess = ref(false)
+const passwordSubmitting = ref(false)
+
+// Delete account
+const deletePassword = ref('')
+const deleteError = ref('')
+const deleteSuccess = ref(false)
+const deleteSubmitting = ref(false)
 
 const sections = [
   { id: 'notifications', label: 'Notifications', icon: 'lucide:bell' },
-  { id: 'privacy', label: 'Privacy', icon: 'lucide:eye-off' },
   { id: 'preferences', label: 'Preferences', icon: 'lucide:sliders-horizontal' },
   { id: 'account', label: 'Account', icon: 'lucide:user-cog' },
 ]
 
-function loadSettingsData() {
-  settings.value = loadSettings()
+async function loadSettingsData() {
+  try {
+    const res = await getMyPreferences()
+    const p = res.data.data || {}
+    settings.value = {
+      notifications: {
+        emailNotifications: p.emailNotifications ?? true,
+        weeklyDigest: p.weeklyDigest ?? false,
+        newArticleAlerts: p.newArticleAlerts ?? true,
+        commentAlerts: p.commentAlerts ?? true,
+        memberAnnouncements: p.memberAnnouncements ?? false,
+      },
+      preferences: {
+        darkMode: p.darkMode ?? (getTheme() === 'dark'),
+        fontSize: p.fontSize || 'medium',
+      },
+    }
+    // Ensure rendered theme matches the member's stored choice.
+    setTheme(settings.value.preferences.darkMode ? 'dark' : 'light')
+  } catch (err) {
+    console.error('Failed to load settings:', err)
+  }
+}
+
+async function saveSettingsData() {
+  try {
+    await updateMyPreferences({
+      emailNotifications: settings.value.notifications.emailNotifications,
+      weeklyDigest: settings.value.notifications.weeklyDigest,
+      newArticleAlerts: settings.value.notifications.newArticleAlerts,
+      commentAlerts: settings.value.notifications.commentAlerts,
+      memberAnnouncements: settings.value.notifications.memberAnnouncements,
+      darkMode: settings.value.preferences.darkMode,
+      fontSize: settings.value.preferences.fontSize,
+    })
+    saved.value = true
+    setTimeout(() => { saved.value = false }, 2000)
+  } catch (err) {
+    alert(err.message || 'Could not save settings.')
+  }
 }
 
 function toggleSetting(category, key) {
   settings.value[category][key] = !settings.value[category][key]
+  if (category === 'preferences' && key === 'darkMode') {
+    setTheme(settings.value.preferences.darkMode ? 'dark' : 'light')
+  }
   saveSettingsData()
 }
 
@@ -56,50 +102,57 @@ function setFontSize(size) {
   saveSettingsData()
 }
 
-function saveSettingsData() {
-  saveSettings(settings.value)
-  saved.value = true
-  setTimeout(() => { saved.value = false }, 2000)
-}
-
-function handleChangePassword() {
+async function handleChangePassword() {
   passwordError.value = ''
   passwordSuccess.value = false
-
   if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
     passwordError.value = 'All fields are required.'
     return
   }
-  if (newPassword.value.length < 6) {
-    passwordError.value = 'New password must be at least 6 characters.'
+  if (newPassword.value.length < 8) {
+    passwordError.value = 'New password must be at least 8 characters.'
     return
   }
   if (newPassword.value !== confirmPassword.value) {
     passwordError.value = 'Passwords do not match.'
     return
   }
-
-  // In a real app, this would call an API. For now we simulate success.
-  passwordSuccess.value = true
-  currentPassword.value = ''
-  newPassword.value = ''
-  confirmPassword.value = ''
-  setTimeout(() => { passwordSuccess.value = false }, 3000)
-}
-
-function handleResetSettings() {
-  if (confirm('Reset all settings to defaults?')) {
-    settings.value = getDefaultSettings()
-    saveSettingsData()
+  passwordSubmitting.value = true
+  try {
+    await changeMyPassword({
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+      newPasswordConfirmation: confirmPassword.value,
+    })
+    passwordSuccess.value = true
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    setTimeout(() => { passwordSuccess.value = false }, 3000)
+  } catch (err) {
+    passwordError.value = err.message || 'Could not change password.'
+  } finally {
+    passwordSubmitting.value = false
   }
 }
 
-function handleDeleteAccount() {
-  if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
-    if (confirm('This will permanently delete all your data. Continue?')) {
-      // In production, this would call an API
-      alert('Account deletion request submitted.')
-    }
+async function handleDeleteAccount() {
+  deleteError.value = ''
+  deleteSuccess.value = false
+  if (!deletePassword.value) {
+    deleteError.value = 'Enter your password to confirm.'
+    return
+  }
+  if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return
+  deleteSubmitting.value = true
+  try {
+    await requestAccountDeletion({ password: deletePassword.value })
+    deleteSuccess.value = true
+    deletePassword.value = ''
+  } catch (err) {
+    deleteError.value = err.message || 'Could not submit deletion request.'
+  } finally {
+    deleteSubmitting.value = false
   }
 }
 
@@ -113,7 +166,7 @@ onMounted(() => {
     <div class="flex items-start justify-between gap-4 mb-8">
       <div>
         <h1 class="text-3xl font-extrabold text-[#111418] mb-2">Settings</h1>
-        <p class="text-gray-500 text-sm">Manage notifications, privacy, and account preferences.</p>
+        <p class="text-gray-500 text-sm">Manage notifications, preferences, and your account.</p>
       </div>
       <p v-if="saved" class="text-xs font-semibold text-[#8b1e21] shrink-0">Settings saved</p>
     </div>
@@ -237,66 +290,6 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- === PRIVACY === -->
-        <div v-if="activeSection === 'privacy'" class="space-y-4">
-          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
-            <h2 class="text-sm font-bold text-[#111418] mb-1">Privacy Controls</h2>
-            <p class="text-xs text-gray-400 mb-5">Manage your visibility across the Guild.</p>
-
-            <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm font-medium text-[#111418]">Show in member directory</p>
-                  <p class="text-xs text-gray-400">Let other members find you in the directory</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  :aria-checked="settings.privacy.showInDirectory"
-                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
-                  :class="settings.privacy.showInDirectory ? 'bg-[#8b1e21]' : 'bg-gray-300'"
-                  @click="toggleSetting('privacy', 'showInDirectory')"
-                >
-                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.privacy.showInDirectory }" />
-                </button>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm font-medium text-[#111418]">Show writing activity publicly</p>
-                  <p class="text-xs text-gray-400">Display your published articles on your profile</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  :aria-checked="settings.privacy.showWritingActivity"
-                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
-                  :class="settings.privacy.showWritingActivity ? 'bg-[#8b1e21]' : 'bg-gray-300'"
-                  @click="toggleSetting('privacy', 'showWritingActivity')"
-                >
-                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.privacy.showWritingActivity }" />
-                </button>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm font-medium text-[#111418]">Show email to members</p>
-                  <p class="text-xs text-gray-400">Allow other Guild members to see your email</p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  :aria-checked="settings.privacy.showEmailToMembers"
-                  class="relative w-10 h-5 rounded-full transition-colors shrink-0"
-                  :class="settings.privacy.showEmailToMembers ? 'bg-[#8b1e21]' : 'bg-gray-300'"
-                  @click="toggleSetting('privacy', 'showEmailToMembers')"
-                >
-                  <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.privacy.showEmailToMembers }" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- === PREFERENCES === -->
         <div v-if="activeSection === 'preferences'" class="space-y-4">
@@ -337,16 +330,20 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Reset -->
-          <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
-            <h2 class="text-sm font-bold text-[#111418] mb-1">Reset Settings</h2>
-            <p class="text-xs text-gray-400 mb-4">Restore all settings to their default values.</p>
+          <div class="flex items-center justify-between border border-[#eae8e4] rounded-xl p-6 bg-white">
+            <div>
+              <h2 class="text-sm font-bold text-[#111418] mb-1">Dark Mode</h2>
+              <p class="text-xs text-gray-400">Use a dark color scheme across the portal.</p>
+            </div>
             <button
               type="button"
-              class="text-xs font-semibold text-red-600 border border-red-200 px-4 py-2 hover:bg-red-50 transition"
-              @click="handleResetSettings"
+              role="switch"
+              :aria-checked="settings.preferences.darkMode"
+              class="relative w-10 h-5 rounded-full transition-colors shrink-0"
+              :class="settings.preferences.darkMode ? 'bg-[#8b1e21]' : 'bg-gray-300'"
+              @click="toggleSetting('preferences', 'darkMode')"
             >
-              Reset to defaults
+              <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform" :class="{ 'translate-x-5': settings.preferences.darkMode }" />
             </button>
           </div>
         </div>
@@ -400,35 +397,33 @@ onMounted(() => {
           <!-- Membership info -->
           <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
             <h2 class="text-sm font-bold text-[#111418] mb-1">Membership</h2>
-            <p class="text-xs text-gray-400 mb-4">Your current tier and its benefits.</p>
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-10 h-10 rounded-full bg-[#8b1e21]/10 flex items-center justify-center">
-                <Icon icon="lucide:award" class="w-5 h-5 text-[#8b1e21]" />
-              </div>
-              <div>
-                <p class="text-sm font-bold text-[#111418]">{{ currentUser?.tierLabel ?? 'Member' }}</p>
-                <p class="text-xs text-gray-400">{{ currentUser?.tierShort ?? '—' }}</p>
-              </div>
-            </div>
-            <p class="text-xs text-gray-500">
-              <span v-if="currentUser?.articleMonthlyLimit">
-                Article limit: {{ currentUser.articleMonthlyLimit }} per month
-              </span>
-              <span v-else>Unlimited articles</span>
-            </p>
+            <p class="text-xs text-gray-400">Your current Guild membership tier and benefits are shown on your profile.</p>
           </div>
 
           <!-- Danger zone -->
           <div class="border border-red-200 rounded-xl p-6 bg-white">
             <h2 class="text-sm font-bold text-red-600 mb-1">Danger Zone</h2>
             <p class="text-xs text-gray-400 mb-4">Irreversible actions for your account.</p>
-            <button
-              type="button"
-              class="text-xs font-semibold text-white bg-red-600 px-4 py-2 hover:bg-red-700 transition"
-              @click="handleDeleteAccount"
-            >
-              Delete Account
-            </button>
+            <div class="space-y-3 max-w-sm">
+              <div>
+                <label class="text-xs font-medium text-gray-600 mb-1 block">Confirm your password</label>
+                <input
+                  v-model="deletePassword"
+                  type="password"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500 transition"
+                />
+              </div>
+              <p v-if="deleteError" class="text-xs text-red-500">{{ deleteError }}</p>
+              <p v-if="deleteSuccess" class="text-xs text-green-600">Deletion request received. Our team will review it shortly.</p>
+              <button
+                type="button"
+                :disabled="deleteSubmitting"
+                class="text-xs font-semibold text-white bg-red-600 px-4 py-2 hover:bg-red-700 transition disabled:opacity-50"
+                @click="handleDeleteAccount"
+              >
+                {{ deleteSubmitting ? 'Submitting…' : 'Delete Account' }}
+              </button>
+            </div>
           </div>
         </div>
 

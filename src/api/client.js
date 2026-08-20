@@ -45,4 +45,11 @@ apiClient.interceptors.response.use(
   }
 )
 
+// --- Preferences & account (member portal) ---
+
+export const getMyPreferences = () => apiClient.get('/members/preferences')
+export const updateMyPreferences = (payload) => apiClient.patch('/members/preferences', payload)
+export const changeMyPassword = (payload) => apiClient.post('/members/password', payload)
+export const requestAccountDeletion = (payload) => apiClient.post('/members/account/deletion-request', payload)
+
 export default apiClient
