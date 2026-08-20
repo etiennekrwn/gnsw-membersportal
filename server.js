@@ -1,14 +1,20 @@
-// Minimal static server for the GNSW frontends.
+// Minimal static server for the GNSW members portal.
 // - Serves the Vite `dist/` build.
 // - SPA fallback: unknown routes -> index.html (so deep links reload correctly).
 // - Caching: hashed /assets/* are cached long-term (immutable);
 //   everything else (index.html, favicon) is served with no-cache so new
 //   deployments are picked up on the next page load.
-const http = require('http')
-const fs = require('fs')
-const path = require('path')
+// NOTE: package.json has "type": "module", so this file must use ESM imports.
+import http from 'node:http'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const DIST = path.resolve(__dirname, 'dist')
+// __dirname replacement for ESM modules.
+const __filename = fileURLToPath(import.meta.url)
+const __dirname_ = path.dirname(__filename)
+
+const DIST = path.resolve(__dirname_, 'dist')
 const PORT = process.env.PORT || 3000
 
 const MIME = {
