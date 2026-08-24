@@ -6,8 +6,8 @@ import RightSidebar from '../components/feed/RightSidebar.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
 import PageLoading from '../components/ui/PageLoading.vue'
 import SubscriptionCard from '../components/SubscriptionCard.vue'
-import { mockArticles } from '../data/mockArticles.js'
-import { filterFeedArticles, getSavedArticles } from '../data/feedActions.js'
+import { getFeedArticles } from '../api/client.js'
+import { getSavedArticles } from '../data/feedActions.js'
 
 const currentUser = inject('currentUser')
 const isGuest = computed(() => !currentUser?.value)
@@ -36,8 +36,12 @@ async function loadArticles() {
   loading.value = true
   loadError.value = false
   try {
-    await new Promise(resolve => setTimeout(resolve, 400))
-    articles.value = mockArticles
+    const tagParam =
+      activeTab.value === 'For You' || activeTab.value === 'Latest'
+        ? undefined
+        : activeTab.value
+    const res = await getFeedArticles({ tag: tagParam })
+    articles.value = res.data?.data || []
   } catch {
     loadError.value = true
   } finally {
@@ -53,11 +57,10 @@ onMounted(() => {
 })
 
 const tabbedArticles = computed(() => {
-  const visible = filterFeedArticles(articles.value)
-  if (activeTab.value === 'Saved') return getSavedArticles(visible)
-  if (activeTab.value === 'For You') return visible
-  if (activeTab.value === 'Latest') return [...visible].reverse()
-  return visible.filter(a => a.tag === activeTab.value)
+  if (activeTab.value === 'Saved') return getSavedArticles(articles.value)
+  if (activeTab.value === 'Latest') return articles.value
+  if (activeTab.value === 'Featured') return articles.value.filter(a => a.tag === 'Featured')
+  return articles.value
 })
 
 const filteredArticles = computed(() => tabbedArticles.value.slice(0, visibleCount.value))
@@ -69,6 +72,7 @@ function loadMore() {
 
 watch(activeTab, () => {
   visibleCount.value = PAGE_SIZE
+  if (activeTab.value !== 'Saved') loadArticles()
 })
 </script>
 

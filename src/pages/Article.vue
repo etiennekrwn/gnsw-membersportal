@@ -1,36 +1,53 @@
 <script setup>
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { getArticleById, getRelatedArticles, mockArticles } from '../data/mockArticles.js'
+import { getArticle } from '../api/client.js'
+import { getRelatedArticles } from '../data/mockArticles.js'
 import ArticleBody from '../components/article/ArticleBody.vue'
 
 const route = useRoute()
 const shareMessage = ref("")
+const post = ref(null)
+const relatedPosts = ref([])
+const loadError = ref(false)
 
 // Guest browsing: visitors see a preview, then the login wall gates member actions.
 const currentUser = inject('currentUser')
 const openWall = inject('openWall')
 const isGuest = computed(() => !currentUser?.value)
 
-// Current article
-const post = computed(() => getArticleById(route.params.id))
+onMounted(async () => {
+  try {
+    const res = await getArticle(route.params.id)
+    post.value = res.data?.data || null
+    relatedPosts.value = getRelatedArticles(route.params.id, 3)
+  } catch {
+    loadError.value = true
+  }
+})
 
-// Related articles
-const relatedPosts = computed(() => getRelatedArticles(route.params.id, 3))
-
-// Like state
+// Like state (clap is persisted server-side via the public clap endpoint)
 const isLiked = ref(false)
-const likeCount = ref(post.value?.likes ?? 42)
+const likeCount = computed(() => post.value?.likes ?? post.value?.claps ?? 0)
 
-const toggleLike = () => {
+const toggleLike = async () => {
   if (isGuest.value) return openWall({ kind: 'like' })
-  isLiked.value = !isLiked.value
-  likeCount.value += isLiked.value ? 1 : -1
+  if (!post.value) return
+  const prev = isLiked.value
+  isLiked.value = !prev
+  // optimistic update; the clap endpoint persists the new count
+  try {
+    const { clapArticle } = await import('../api/client.js')
+    const res = await clapArticle(post.value.id)
+    if (res.data?.data) post.value.claps = res.data.data.claps
+  } catch {
+    isLiked.value = prev // revert on failure
+  }
 }
 
-// View count (mock, static per load)
-const viewCount = computed(() => post.value?.views ?? 1204)
+// View count (incremented server-side when the article is fetched)
+const viewCount = computed(() => post.value?.views ?? 0)
 
 // Share action
 const handleShare = async () => {
