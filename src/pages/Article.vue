@@ -1,30 +1,62 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { getArticleById, getRelatedArticles, mockArticles } from '../data/mockArticles.js'
+import { getArticle, getFeedArticles, clapArticle } from '../api/articles.js'
 import ArticleBody from '../components/article/ArticleBody.vue'
 
 const route = useRoute()
 const shareMessage = ref("")
 
-// Current article
-const post = computed(() => getArticleById(route.params.id))
-
-// Related articles
-const relatedPosts = computed(() => getRelatedArticles(route.params.id, 3))
+// Current article (loaded from the backend)
+const post = ref(null)
+const relatedPosts = ref([])
+const loading = ref(true)
+const loadError = ref(false)
 
 // Like state
 const isLiked = ref(false)
-const likeCount = ref(post.value?.likes ?? 42)
+const likeCount = ref(0)
 
-const toggleLike = () => {
-  isLiked.value = !isLiked.value
-  likeCount.value += isLiked.value ? 1 : -1
+// View count (from the backend)
+const viewCount = ref(0)
+
+async function loadArticle() {
+  loading.value = true
+  loadError.value = false
+  try {
+    post.value = await getArticle(route.params.id)
+    likeCount.value = post.value?.likes ?? post.value?.claps ?? 0
+    viewCount.value = post.value?.views ?? 0
+    const feed = await getFeedArticles({ tag: 'All' })
+    relatedPosts.value = feed
+      .filter(a => String(a.id) !== String(post.value.id))
+      .slice(0, 3)
+  } catch {
+    loadError.value = true
+  } finally {
+    loading.value = false
+  }
 }
 
-// View count (mock, static per load)
-const viewCount = computed(() => post.value?.views ?? 1204)
+onMounted(loadArticle)
+
+const toggleLike = async () => {
+  if (!post.value) return
+  if (!isLiked.value) {
+    isLiked.value = true
+    likeCount.value += 1
+    try {
+      const updated = await clapArticle(post.value.id)
+      likeCount.value = updated?.claps ?? likeCount.value
+    } catch {
+      // Persisting the clap failed; keep the local optimistic count.
+    }
+  } else {
+    isLiked.value = false
+    likeCount.value -= 1
+  }
+}
 
 // Share action
 const handleShare = async () => {
@@ -99,7 +131,20 @@ const submitComment = () => {
 
 <template>
   <div class="max-w-3xl mx-auto px-6 py-8">
-    <template v-if="post">
+    <template v-if="loading">
+      <div class="text-center py-24">
+        <p class="text-slate-400">Loading article...</p>
+      </div>
+    </template>
+
+    <template v-else-if="loadError">
+      <div class="text-center py-24">
+        <h1 class="text-3xl font-bold text-[#111418] mb-4">Could not load this article</h1>
+        <RouterLink to="/" class="text-[#8b1e21] font-semibold hover:underline">Return Home</RouterLink>
+      </div>
+    </template>
+
+    <template v-else-if="post">
       <!-- Breadcrumb -->
       <div class="mb-6 flex items-center gap-2 text-[10px] uppercase tracking-[2px] text-slate-400">
         <RouterLink
@@ -202,7 +247,7 @@ const submitComment = () => {
 
       <!-- Article body -->
       <article>
-        <ArticleBody :blocks="post.body" />
+        <ArticleBody :blocks="post.body" :html="post.bodyHtml" />
 
         <!-- Tags -->
         <div class="mt-12 pt-8 border-t border-[#eae8e4] flex flex-wrap items-center gap-2">

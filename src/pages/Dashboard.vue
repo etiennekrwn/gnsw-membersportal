@@ -5,7 +5,7 @@ import ArticleCard from '../components/feed/ArticleCard.vue'
 import RightSidebar from '../components/feed/RightSidebar.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
 import PageLoading from '../components/ui/PageLoading.vue'
-import { mockArticles } from '../data/mockArticles.js'
+import { getFeedArticles } from '../api/articles.js'
 import { filterFeedArticles, getSavedArticles } from '../data/feedActions.js'
 
 const currentUser = inject('currentUser')
@@ -21,8 +21,7 @@ async function loadArticles() {
   loading.value = true
   loadError.value = false
   try {
-    await new Promise(resolve => setTimeout(resolve, 400))
-    articles.value = mockArticles
+    articles.value = await getFeedArticles({ tag: 'All' })
   } catch {
     loadError.value = true
   } finally {

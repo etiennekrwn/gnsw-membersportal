@@ -105,8 +105,8 @@ function cancelEditing() {
 }
 
 async function saveProfileData() {
-  try {
-    await apiClient.put('/members/profile', {
+    try {
+      await apiClient.put('/members/profile', {
       organisation: employer.value,
       bio: bio.value,
       sectors: specializations.value.join(', '),
@@ -114,8 +114,6 @@ async function saveProfileData() {
       speechTypes: '',
       languages: languages.value.join(', '),
       zone: zone.value,
-      city: city.value,
-      profileImageUrl: null,
       linkedInProfile: linkedin.value,
       socials: socials.value,
     })
