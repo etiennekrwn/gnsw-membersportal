@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between h-14 px-4 sm:px-6">
 
       <!-- Left: Hamburger + Logo -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 sm:gap-4 min-w-0">
 
         <button
           @click="emit('toggle-sidebar')"
@@ -14,18 +14,18 @@
         </button>
 
         <!-- Logo -->
-        <RouterLink to="/" class="font-['Playfair_Display'] text-3xl font-extrabold text-[#111418] no-underline select-none tracking-tight">
-          The Guild<span class="text-4xl">.</span>
+        <RouterLink to="/" class="font-['Playfair_Display'] text-2xl sm:text-3xl font-extrabold text-[#111418] no-underline select-none tracking-tight">
+          The Guild<span class="text-3xl sm:text-4xl">.</span>
         </RouterLink>
 
       </div>
 
-      <div class="ml-auto mr-2 sm:mx-4">
+      <div class="ml-auto mr-1 sm:mr-4 min-w-0 flex justify-center">
         <SearchBar />
       </div>
 
       <!-- Right: Write + Bell + Avatar -->
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-0.5 sm:gap-1 shrink-0">
         <template v-if="user">
 
         <!-- Write button — only Partners and Fellows can write -->
@@ -33,9 +33,10 @@
           v-if="user?.tier === 'ROLE_MEMBER' || user?.tier === 'ROLE_FELLOW'"
           to="/my-writing"
           class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#111418] transition-colors px-2 py-1.5 rounded no-underline"
+          aria-label="Write"
         >
           <Icon icon="lucide:pen-line" width="16" height="16" />
-          <span>Write</span>
+          <span class="hidden md:inline">Write</span>
         </RouterLink>
 
         <!-- Notification Bell -->
