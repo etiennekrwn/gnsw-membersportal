@@ -7,7 +7,7 @@
 
         <button
           @click="emit('toggle-sidebar')"
-          class="p-1 text-[#111418] hover:text-gray-400 transition-colors cursor-pointer"
+          class="p-3 -m-3 text-[#111418] hover:text-gray-400 transition-colors cursor-pointer"
           aria-label="Toggle menu"
         >
           <Icon icon="lucide:menu" width="22" height="22" />

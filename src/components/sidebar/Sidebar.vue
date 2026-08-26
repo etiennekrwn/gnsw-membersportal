@@ -62,7 +62,7 @@ function closeOnSmallScreen() {
     <div class="flex items-center gap-4 px-5 h-14 border-b border-[#eae8e4] lg:hidden">
       <button
         @click="emit('close')"
-        class="text-gray-400 hover:text-[#111418] transition-colors cursor-pointer"
+        class="p-3 -m-3 text-gray-400 hover:text-[#111418] transition-colors cursor-pointer"
       >
         <Icon icon="lucide:menu" width="22" height="22" />
       </button>
