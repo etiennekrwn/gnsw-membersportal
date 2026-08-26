@@ -28,18 +28,22 @@ function goBack() {
   router.push({ name: 'DraftEdit', params: { id: route.params.id } })
 }
 
-function handlePublish() {
+async function handlePublish() {
   publishing.value = true
   publishError.value = ''
 
-  const result = publishDraft(route.params.id)
-  if (!result.ok) {
-    publishError.value = result.error
+  try {
+    const result = await publishDraft(route.params.id)
+    if (!result.ok) {
+      publishError.value = result.error
+      return
+    }
+    router.push({ name: 'MyWriting', query: { tab: 'Published', published: result.published.id } })
+  } catch (err) {
+    publishError.value = 'Could not publish due to network issues. Please try again.'
+  } finally {
     publishing.value = false
-    return
   }
-
-  router.push({ name: 'MyWriting', query: { tab: 'Published', published: result.published.id } })
 }
 
 const toggleLike = () => {

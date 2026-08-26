@@ -82,15 +82,19 @@ function handleEdit(id, event) {
   goToDraft(id)
 }
 
-function handlePublish(id, event) {
+async function handlePublish(id, event) {
   event.stopPropagation()
-  const result = publishDraft(id)
-  if (!result.ok) {
-    showToast(result.error)
-  } else {
-    refreshLists()
-    activeTab.value = 'Published'
-    showToast('Draft published')
+  try {
+    const result = await publishDraft(id)
+    if (!result.ok) {
+      showToast(result.error)
+    } else {
+      refreshLists()
+      activeTab.value = 'Published'
+      showToast('Draft published')
+    }
+  } catch (err) {
+    showToast('Could not publish due to network issues. Please try again.')
   }
   closeMenu()
 }

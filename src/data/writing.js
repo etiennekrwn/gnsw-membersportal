@@ -1,4 +1,4 @@
-import { mockDrafts, mockPublished } from './mockDrafts.js'
+import { publishArticle } from '../api/client.js'
 
 const DRAFTS_KEY = 'gnsw_drafts'
 const PUBLISHED_KEY = 'gnsw_published'
@@ -65,10 +65,7 @@ function generateSlug(title = '') {
 }
 
 function allDraftRecords() {
-  const stored = loadStoredDrafts()
-  const storedIds = new Set(stored.map(d => d.id))
-  const seeded = mockDrafts.filter(d => !storedIds.has(d.id))
-  return [...stored, ...seeded]
+  return loadStoredDrafts()
 }
 
 export function getDrafts() {
@@ -77,10 +74,7 @@ export function getDrafts() {
 }
 
 export function getPublished() {
-  const stored = loadStoredPublished()
-  const storedIds = new Set(stored.map(p => p.id))
-  const seeded = mockPublished.filter(p => !storedIds.has(p.id))
-  return [...stored, ...seeded]
+  return loadStoredPublished()
 }
 
 export function getDraftById(id) {
@@ -133,7 +127,7 @@ export function updateDraft(id, updates) {
 
   if (updates.title && !updates.slug) {
     // only auto-generate slug if one isn't explicitly provided
-    const existing = index >= 0 ? stored[index] : mockDrafts.find(d => d.id === id)
+    const existing = index >= 0 ? stored[index] : null
     if (!existing?.slug) next.slug = generateSlug(updates.title)
   }
 
@@ -145,13 +139,8 @@ export function updateDraft(id, updates) {
     return stored[index]
   }
 
-  const seeded = mockDrafts.find(d => d.id === id)
-  if (!seeded) return null
-
-  const updated = { ...seeded, ...next }
-  stored.unshift(updated)
-  saveStoredDrafts(stored)
-  return updated
+  // Draft not found in local storage, nothing to update.
+  return null
 }
 
 export function renameDraft(id, title) {
@@ -189,7 +178,7 @@ function extractFirstImageSrc(html) {
   return match ? match[1] : null
 }
 
-export function publishDraft(id) {
+export async function publishDraft(id) {
   const draft = getDraftById(id)
   if (!draft) return { ok: false, error: 'Draft not found.' }
 
@@ -205,23 +194,49 @@ export function publishDraft(id) {
     coverImage = extractFirstImageSrc(body)
   }
 
+  // Publish to the server first     the draft is only consumed after the
+  // article is confirmed live in the feed. If the request fails (network,
+  // server down, session expired), we hard-fail and keep the draft intact.
+  let serverArticle = null
+  try {
+    const response = await publishArticle({
+      title,
+      excerpt: draft.excerpt || body.replace(/<[^>]*>/g, ' ').slice(0, 120).trim(),
+      content: body,
+      tags: draft.tags ?? [],
+      tag: 'For You',
+      category: null,
+      thumbnailUrl: draft.thumbnail || DEFAULT_THUMBNAIL,
+      imageUrl: coverImage,
+      readTime: Math.max(1, Math.ceil(wordCount(body) / 200)),
+      status: 'PUBLISHED',
+    })
+    serverArticle = response?.data?.data ?? response?.data ?? null
+  } catch (err) {
+    return { ok: false, error: 'Could not publish due to network issues. Please try again.' }
+  }
+
+  if (!serverArticle || !serverArticle.id) {
+    return { ok: false, error: 'Could not publish due to network issues. Please try again.' }
+  }
+
   const published = {
     id: `published-${Date.now()}`,
     draftId: draft.id,
-    title,
-    excerpt: draft.excerpt || body.replace(/<[^>]*>/g, ' ').slice(0, 120).trim(),
+    articleId: serverArticle.id,
+    title: serverArticle.title || title,
+    excerpt: serverArticle.excerpt || draft.excerpt || '',
     body,
     slug: draft.slug || generateSlug(title),
     categories: draft.categories ?? [],
     tags: draft.tags ?? [],
-    coverImage,
-    datePublished: formatDate(),
-    readTime: Math.max(1, Math.ceil(wordCount(body) / 200)),
-    claps: 0,
-    views: 0,
+    coverImage: serverArticle.imageUrl || coverImage,
+    datePublished: formatDate(new Date()),
+    readTime: serverArticle.readTime || Math.max(1, Math.ceil(wordCount(body) / 200)),
+    claps: serverArticle.claps ?? 0,
+    views: serverArticle.views ?? 0,
     status: 'Published',
-    articleId: null,
-    thumbnail: draft.thumbnail || DEFAULT_THUMBNAIL,
+    thumbnail: serverArticle.thumbnailUrl || draft.thumbnail || DEFAULT_THUMBNAIL,
   }
 
   const stored = loadStoredPublished()
@@ -281,3 +296,4 @@ export function searchWriting(query) {
     published: getPublished().filter(match),
   }
 }
+
