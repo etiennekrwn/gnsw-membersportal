@@ -1,16 +1,37 @@
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { getCourseById } from '../data/courses.js'
+import { getCourseById, getCourseWithProgress, advanceCourseProgress } from '../data/courses.js'
 
 const route = useRoute()
+const router = useRouter()
 
-const course = computed(() => getCourseById(route.params.courseId))
+const course = computed(() => getCourseWithProgress(getCourseById(route.params.courseId)))
 const lessonTitle = computed(() => {
   if (!course.value?.currentLesson) return 'Lesson'
   return course.value.currentLesson.lessonTitle
 })
+function lessonIndex() {
+  try {
+    return JSON.parse(localStorage.getItem('gnsw_course_progress') || '{}')[course.value?.id]?.completed ?? 0
+  } catch { return 0 }
+}
+
+const bodyParagraphs = [
+  'A clear message always begins with a clear intention. Before a single word is drafted, identify what should change in the room, in the decision, or in the public mind.',
+  'Good structure does the heavy lifting. Open with the reality, escalate to the stakes, then resolve with a concrete call to action.',
+  'Language earns trust through precision. Replace abstractions with observable behaviour, and ground every claim in evidence.',
+]
+
+const lessonBody = computed(() => bodyParagraphs[lessonIndex() % bodyParagraphs.length])
+
+function completeAndNext() {
+  const id = course.value?.id
+  if (!id) return
+  advanceCourseProgress(id)
+  router.push(`/learning/${id}/lesson/${id}-l${lessonIndex() + 2}`)
+}
 </script>
 
 <template>
@@ -34,11 +55,21 @@ const lessonTitle = computed(() => {
       </div>
 
       <h1 class="text-2xl md:text-3xl font-bold text-[#111418] mb-3">{{ lessonTitle }}</h1>
-      <p class="text-sm text-gray-500 mb-8">
-        This lesson view is a placeholder. Full video playback, notes, and quizzes will be added in a later phase.
-      </p>
+      <p class="text-sm text-gray-500 mb-6">{{ course.currentLesson?.moduleTitle }} · {{ course.progress }}% complete</p>
 
-      <div class="flex items-center gap-3">
+      <div class="rounded-xl border border-[#eae8e4] bg-white p-6 md:p-8 mb-8">
+        <p class="text-sm md:text-[15px] text-gray-600 leading-relaxed">{{ lessonBody }}</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          @click="completeAndNext"
+          class="inline-flex items-center gap-2 bg-[#111418] text-white px-5 py-2.5 rounded-md text-sm font-semibold hover:bg-[#8b1e21] transition-colors cursor-pointer"
+        >
+          <Icon icon="lucide:check" class="w-4 h-4" />
+          Mark complete & continue
+        </button>
         <RouterLink
           :to="`/learning/${course.id}`"
           class="inline-flex items-center gap-2 border border-[#eae8e4] px-4 py-2 rounded-md text-sm font-semibold text-[#111418] hover:bg-gray-50 transition no-underline"

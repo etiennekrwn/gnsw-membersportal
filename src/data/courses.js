@@ -54,3 +54,63 @@ export function getContinueLessonRoute(course) {
   }
   return `/learning/${course.id}/lesson/${course.currentLesson.lessonId}`
 }
+
+// --- Lightweight, per-member course progress persisted locally ---
+const PROGRESS_KEY = 'gnsw_course_progress'
+
+function loadProgressMap() {
+  try {
+    return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function saveProgressMap(map) {
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(map))
+}
+
+const TEMPLATE_LESSON_TITLES = [
+  'Foundations and Objectives',
+  'Core Concepts',
+  'Building the Skill',
+  'Practical Application',
+  'Common Pitfalls',
+  'Putting It Into Practice',
+]
+
+/**
+ * A mutable view of a course for lesson-taking. Seeded from the mock course,
+ * but the user's progress/currentLesson is persisted so it advances as they
+ * complete lessons.
+ */
+export function getCourseWithProgress(course) {
+  if (!course) return null
+  const map = loadProgressMap()
+  const stored = map[course.id]
+  const base = getCourseById(course.id)
+
+  const lessonCount = base ? base.moduleList.reduce((s, m) => s + m.lessonCount, 0) : base?.lessons || 0
+  const currentLessonIndex = stored?.completed ?? 0
+
+  // current lesson title derived from template slots, or fall back to seed
+  const templateTitle = TEMPLATE_LESSON_TITLES[currentLessonIndex % TEMPLATE_LESSON_TITLES.length]
+  const fallback = base?.currentLesson?.lessonTitle
+
+  return {
+    ...course,
+    progress: stored ? Math.min(100, Math.round((currentLessonIndex / lessonCount) * 100)) : (course.progress || 0),
+    currentLesson: {
+      moduleTitle: `Module ${Math.floor(currentLessonIndex / 3) + 1}`,
+      lessonTitle: templateTitle || fallback || 'Lesson',
+      lessonId: `${course.id}-l${currentLessonIndex + 1}`,
+    },
+  }
+}
+
+export function advanceCourseProgress(courseId) {
+  const map = loadProgressMap()
+  const current = map[courseId]?.completed ?? 0
+  map[courseId] = { completed: current + 1 }
+  saveProgressMap(map)
+}

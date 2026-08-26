@@ -397,7 +397,10 @@ onMounted(() => {
           <!-- Membership info -->
           <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
             <h2 class="text-sm font-bold text-[#111418] mb-1">Membership</h2>
-            <p class="text-xs text-gray-400">Your current Guild membership tier and benefits are shown on your profile.</p>
+            <p class="text-xs text-gray-400">Your current Guild membership tier, billing, and benefits.</p>
+            <RouterLink to="/membership" class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#8b1e21] hover:underline">
+              Manage membership <Icon icon="lucide:arrow-right" class="w-3.5 h-3.5" />
+            </RouterLink>
           </div>
 
           <!-- Danger zone -->

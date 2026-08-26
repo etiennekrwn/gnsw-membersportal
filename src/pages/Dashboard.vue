@@ -1,13 +1,18 @@
 <script setup>
 import { ref, computed, onMounted, watch, inject } from 'vue'
+import { Icon } from '@iconify/vue'
 import FeedTabs from '../components/feed/FeedTabs.vue'
 import ArticleCard from '../components/feed/ArticleCard.vue'
 import RightSidebar from '../components/feed/RightSidebar.vue'
 import EmptyState from '../components/ui/EmptyState.vue'
 import PageLoading from '../components/ui/PageLoading.vue'
-import SubscriptionCard from '../components/SubscriptionCard.vue'
 import { getFeedArticles } from '../api/client.js'
-import { getSavedArticles } from '../data/feedActions.js'
+import {
+  getSavedArticles,
+  getFollowedAuthors,
+  filterFeedArticles,
+  engagementScore,
+} from '../data/feedActions.js'
 
 const currentUser = inject('currentUser')
 const isGuest = computed(() => !currentUser?.value)
@@ -36,8 +41,12 @@ async function loadArticles() {
   loading.value = true
   loadError.value = false
   try {
+    // "Following" tab needs all published articles to cross-reference authors.
     const tagParam =
-      activeTab.value === 'For You' || activeTab.value === 'Latest'
+      activeTab.value === 'For You' ||
+      activeTab.value === 'Latest' ||
+      activeTab.value === 'Trending' ||
+      activeTab.value === 'Following'
         ? undefined
         : activeTab.value
     const res = await getFeedArticles({ tag: tagParam })
@@ -57,14 +66,50 @@ onMounted(() => {
 })
 
 const tabbedArticles = computed(() => {
-  if (activeTab.value === 'Saved') return getSavedArticles(articles.value)
-  if (activeTab.value === 'Latest') return articles.value
-  if (activeTab.value === 'Featured') return articles.value.filter(a => a.tag === 'Featured')
-  return articles.value
+  const all = articles.value
+
+  // Muted authors are hidden across every feed tab.
+  const base = filterFeedArticles(all)
+
+  if (activeTab.value === 'Saved') {
+    return getSavedArticles(all)
+  }
+  if (activeTab.value === 'Following') {
+    const followed = getFollowedAuthors()
+    return base.filter(a => followed.has(a.author.name))
+  }
+  if (activeTab.value === 'Trending') {
+    return [...base].sort((a, b) => engagementScore(b) - engagementScore(a))
+  }
+  if (activeTab.value === 'For You') {
+    // Simple v1 "for you": engagement-ranked with saved/muted respected.
+    return [...base].sort((a, b) => engagementScore(b) - engagementScore(a))
+  }
+  if (activeTab.value === 'Latest') {
+    return base
+  }
+  if (activeTab.value === 'Featured') {
+    return base.filter(a => a.tag === 'Featured')
+  }
+  return base
 })
 
 const filteredArticles = computed(() => tabbedArticles.value.slice(0, visibleCount.value))
 const hasMore = computed(() => visibleCount.value < tabbedArticles.value.length)
+
+const emptyStateTitle = computed(() => {
+  if (activeTab.value === 'Saved') return 'No saved articles yet'
+  if (activeTab.value === 'Following') return 'No articles from followed authors'
+  if (activeTab.value === 'Trending') return 'Nothing trending right now'
+  return 'No articles in this feed'
+})
+
+const emptyStateDescription = computed(() => {
+  if (activeTab.value === 'Saved') return 'Save articles from the feed to read them here later.'
+  if (activeTab.value === 'Following') return 'Follow writers from the feed to build your personalised stream.'
+  if (activeTab.value === 'Trending') return 'Check back soon for new high-engagement writing from Guild members.'
+  return 'Check back soon for new writing from Guild members, or explore another tab.'
+})
 
 function loadMore() {
   visibleCount.value += PAGE_SIZE
@@ -81,7 +126,23 @@ watch(activeTab, () => {
     <div class="flex gap-8">
 
       <div class="flex-1 min-w-0">
-        <SubscriptionCard v-if="!isGuest" class="mb-6" />
+        <!-- Compact "your tier" strip linking to the Membership page -->
+        <RouterLink
+          v-if="!isGuest"
+          to="/membership"
+          class="mb-6 flex items-center justify-between gap-3 rounded-md border border-[#eae8e4] bg-white px-4 py-3 no-underline group"
+        >
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-7 h-7 rounded-full bg-[#111418] flex items-center justify-center shrink-0">
+              <Icon icon="lucide:badge-check" class="w-4 h-4 text-[#d86d70]" />
+            </span>
+            <div class="min-w-0">
+              <p class="text-xs font-semibold text-[#111418]">Your membership</p>
+              <p class="text-[11px] text-gray-500 truncate">Manage tier, billing, and benefits</p>
+            </div>
+          </div>
+          <span class="shrink-0 text-xs font-semibold text-[#8b1e21] group-hover:underline">Manage →</span>
+        </RouterLink>
         <FeedTabs v-model:activeTab="activeTab" />
 
         <!-- Guest prompt banner (dismissible) -->
@@ -148,10 +209,8 @@ watch(activeTab, () => {
           <EmptyState
             v-if="tabbedArticles.length === 0"
             icon="lucide:newspaper"
-            :title="activeTab === 'Saved' ? 'No saved articles yet' : 'No articles in this feed'"
-            :description="activeTab === 'Saved'
-              ? 'Save articles from the feed to read them here later.'
-              : 'Check back soon for new writing from Guild members, or explore another tab.'"
+            :title="emptyStateTitle"
+            :description="emptyStateDescription"
           >
             <button
               v-if="activeTab !== 'For You'"
@@ -175,7 +234,7 @@ watch(activeTab, () => {
         </div>
       </div>
 
-      <div class="hidden xl:block">
+      <div class="hidden lg:block">
         <RightSidebar :user-tier="currentUser?.tier" />
       </div>
 

@@ -24,6 +24,9 @@ const saved = ref(isArticleSaved(props.article.id))
 const muted = ref(isAuthorMuted(props.article.author.name))
 const followed = ref(isAuthorFollowed(props.article.author.name))
 const actionMessage = ref('')
+const routerAuthorId = computed(() =>
+  `author-${props.article.author.name.toLowerCase().replace(/\s+/g, '-')}`
+)
 const feedDate = computed(() => {
   const date = new Date(props.article.date)
 
@@ -72,10 +75,20 @@ function onFollow(event) {
 
     <div class="flex-1 min-w-0 cursor-pointer" @click="openArticle">
       <div class="flex items-center gap-2 mb-3">
-        <div class="w-6 h-6 rounded-full bg-[#111418] flex items-center justify-center shrink-0">
+        <RouterLink
+          :to="`/author/${routerAuthorId}`"
+          class="w-6 h-6 rounded-full bg-[#111418] flex items-center justify-center shrink-0 no-underline"
+          @click.stop
+        >
           <span class="text-white text-[9px] font-semibold">{{ article.author.initials }}</span>
-        </div>
-        <span class="text-xs text-gray-600">{{ article.author.name }}</span>
+        </RouterLink>
+        <RouterLink
+          :to="`/author/${routerAuthorId}`"
+          class="text-xs text-gray-600 hover:text-[#8b1e21] transition-colors no-underline"
+          @click.stop
+        >
+          {{ article.author.name }}
+        </RouterLink>
         <span v-if="followed" class="text-[9px] uppercase tracking-wider font-bold text-[#8b1e21]">Following</span>
       </div>
 

@@ -1,6 +1,7 @@
 const SAVED_KEY = 'gnsw_saved_articles'
 const MUTED_KEY = 'gnsw_muted_authors'
 const FOLLOWED_KEY = 'gnsw_followed_authors'
+const LIKED_KEY = 'gnsw_liked_articles'
 
 function loadSet(key) {
   try {
@@ -72,4 +73,36 @@ export function filterFeedArticles(articles) {
 export function getSavedArticles(allArticles) {
   const saved = getSavedArticleIds()
   return allArticles.filter(a => saved.has(String(a.id)))
+}
+
+// --- Liked articles (persisted locally for now; server sync is a later step) ---
+
+export function getLikedArticleIds() {
+  return loadSet(LIKED_KEY)
+}
+
+export function isArticleLiked(articleId) {
+  return getLikedArticleIds().has(String(articleId))
+}
+
+export function toggleLikeArticle(articleId) {
+  const liked = getLikedArticleIds()
+  const id = String(articleId)
+  if (liked.has(id)) liked.delete(id)
+  else liked.add(id)
+  saveSet(LIKED_KEY, liked)
+  return liked.has(id)
+}
+
+/**
+ * Basic engagement score for a recommended feed. Ranks articles by a blend of
+ * claps, comments, and views so "For You / Trending" shows high-engagement
+ * writing first (weighted toward claps and comments).
+ */
+export function engagementScore(article) {
+  const claps = Number(article.claps || article.likes || 0)
+  const comments = Number(article.comments || 0)
+  const views = Number(article.views || 0)
+  // Prefer items with meaningful reactions; views are the weakest signal.
+  return claps * 2 + comments * 3 + views * 0.1
 }

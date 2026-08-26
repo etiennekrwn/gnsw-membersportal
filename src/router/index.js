@@ -16,6 +16,8 @@ import Lesson from '../pages/Lesson.vue'
 import DraftEditor from '../pages/DraftEditor.vue'
 import DraftPreview from '../pages/DraftPreview.vue'
 import Profile from '../pages/Profile.vue'
+import Membership from '../pages/Membership.vue'
+import AuthorProfile from '../pages/AuthorProfile.vue'
 import Settings from '../pages/Settings.vue'
 import PublishedPost from '../pages/PublishedPost.vue'
 import SearchResults from '../pages/SearchResults.vue'
@@ -70,6 +72,8 @@ const routes = [
       { path: 'learning/:courseId/lesson/:lessonId', name: 'Lesson', component: Lesson },
       { path: 'search', name: 'Search', component: SearchResults },
       { path: 'profile', name: 'Profile', component: Profile },
+      { path: 'membership', name: 'Membership', component: Membership },
+      { path: 'author/:id', name: 'AuthorProfile', component: AuthorProfile },
       { path: 'settings', name: 'Settings', component: Settings },
     ],
   },
@@ -84,7 +88,7 @@ const router = createRouter({
 // Public pages that anyone can browse: feed, article previews, and auth pages.
 // Visitors can see the feed (enticement) but member-only actions are gated
 // in-app by the login wall.
-const PUBLIC_ROUTES = new Set(['Login', 'SetPassword', 'ForgotPassword', 'ResetPassword', 'Dashboard', 'Article', 'NotFound'])
+const PUBLIC_ROUTES = new Set(['Login', 'SetPassword', 'ForgotPassword', 'ResetPassword', 'Dashboard', 'Article', 'AuthorProfile', 'NotFound'])
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('portal_token')

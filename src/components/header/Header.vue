@@ -39,15 +39,7 @@
         </RouterLink>
 
         <!-- Notification Bell -->
-        <button class="relative p-2 text-gray-500 hover:text-[#111418] transition-colors cursor-pointer" aria-label="Notifications">
-          <Icon icon="lucide:bell" width="20" height="20" />
-          <span
-            v-if="notificationCount > 0"
-            class="absolute top-1 right-1 min-w-[14px] h-[14px] bg-[#8b1e21] text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5"
-          >
-            {{ notificationCount > 9 ? '9+' : notificationCount }}
-          </span>
-        </button>
+        <NotificationsMenu />
 
         <!-- Profile Avatar + Dropdown -->
         <ProfileMenu :user="user" @signout="emit('signout')" />
@@ -78,11 +70,11 @@
 <script setup>
 import SearchBar from './SearchBar.vue'
 import ProfileMenu from './ProfileMenu.vue'
+import NotificationsMenu from './NotificationsMenu.vue'
 import { Icon } from '@iconify/vue'
 
 defineProps({
   user: { type: Object, default: null },
-  notificationCount: { type: Number, default: 0 },
 })
 
 const emit = defineEmits(['toggle-sidebar', 'signout'])

@@ -43,6 +43,13 @@
             Profile
           </RouterLink>
           <RouterLink
+            to="/membership"
+            @click="open = false"
+            class="block px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5] transition-colors"
+          >
+            Membership
+          </RouterLink>
+          <RouterLink
             to="/settings"
             @click="open = false"
             class="block px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5] transition-colors"

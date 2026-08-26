@@ -8,6 +8,7 @@ import {
   getInProgressCourse,
   filterCourses,
   getContinueLessonRoute,
+  getCourseWithProgress,
   isCourseLocked,
 } from '../data/courses.js'
 
@@ -23,6 +24,7 @@ const resumeCourse = computed(() => getInProgressCourse())
 
 const filteredCourses = computed(() =>
   filterCourses({ query: searchQuery.value, category: activeCategory.value })
+    .map((c) => getCourseWithProgress(c))
 )
 
 function goToCourse(courseId) {

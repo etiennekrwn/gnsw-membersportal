@@ -7,6 +7,7 @@ import { getEventById, getEvents } from '../../data/events.js'
 const route = useRoute()
 const router = useRouter()
 const currentUser = inject('currentUser')
+const openWall = inject('openWall')
 
 const event = ref(null)
 const allEvents = ref([])
@@ -24,6 +25,10 @@ function loadEvent(id) {
 }
 
 function handleRsvp() {
+  // Member-only events require a logged-in member.
+  if (event.value?.access === 'members' && !currentUser.value) {
+    return openWall({ kind: 'article' })
+  }
   localStorage.setItem(`gnsw_rsvp_${event.value.id}`, JSON.stringify({
     userId: currentUser.value?.id,
     userName: currentUser.value?.name,

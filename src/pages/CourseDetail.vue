@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import {
   getCourseById,
+  getCourseWithProgress,
   isCourseLocked,
   getContinueLessonRoute,
 } from '../data/courses.js'
@@ -11,7 +12,7 @@ import {
 const route = useRoute()
 const currentUser = inject('currentUser')
 
-const course = computed(() => getCourseById(route.params.courseId))
+const course = computed(() => getCourseWithProgress(getCourseById(route.params.courseId)))
 const locked = computed(() =>
   course.value ? isCourseLocked(currentUser.value?.tier, course.value) : false
 )

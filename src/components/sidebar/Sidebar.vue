@@ -14,12 +14,13 @@ const isGuest = computed(() => !currentUser?.value)
 const mainSiteUrl = (import.meta.env.VITE_MAIN_SITE_URL || 'http://localhost:5173').replace(/\/$/, '')
 
 const MEMBER_NAV = [
-  { label: 'Home',       to: '/',           icon: 'lucide:house' },
-  { label: 'My Writing', to: '/my-writing', icon: 'lucide:pen-line' },
-  { label: 'Learning',   to: '/learning',   icon: 'lucide:book-open' },
-  { label: 'Events',     to: '/events',     icon: 'lucide:calendar' },
-  { label: 'Profile',    to: '/profile',    icon: 'lucide:user' },
-  { label: 'Settings',   to: '/settings',   icon: 'lucide:settings' },
+  { label: 'Home',       to: '/',             icon: 'lucide:house' },
+  { label: 'My Writing', to: '/my-writing',   icon: 'lucide:pen-line' },
+  { label: 'Learning',   to: '/learning',     icon: 'lucide:book-open' },
+  { label: 'Events',     to: '/events',       icon: 'lucide:calendar' },
+  { label: 'Profile',    to: '/profile',      icon: 'lucide:user' },
+  { label: 'Membership', to: '/membership',   icon: 'lucide:badge-check' },
+  { label: 'Settings',   to: '/settings',     icon: 'lucide:settings' },
 ]
 
 const navItems = computed(() => (isGuest.value ? [{ label: 'Home', to: '/', icon: 'lucide:house' }] : MEMBER_NAV))

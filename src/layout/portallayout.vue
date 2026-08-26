@@ -21,7 +21,6 @@ function signout() {
 
     <Header
       :user="currentUser"
-      :notification-count="5"
       @toggle-sidebar="sidebarOpen = !sidebarOpen"
       @signout="signout"
     />

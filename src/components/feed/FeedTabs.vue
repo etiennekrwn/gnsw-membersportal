@@ -5,7 +5,7 @@ defineProps({
 
 const emit = defineEmits(['update:activeTab'])
 
-const tabs = ['For You', 'Featured', 'Latest', 'Saved']
+const tabs = ['For You', 'Trending', 'Following', 'Latest', 'Featured', 'Saved']
 </script>
 
 <template>

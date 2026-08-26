@@ -5,12 +5,20 @@ import { Icon } from '@iconify/vue'
 import { getArticle } from '../api/client.js'
 import { getRelatedArticles } from '../data/mockArticles.js'
 import ArticleBody from '../components/article/ArticleBody.vue'
+import { isArticleLiked, toggleLikeArticle } from '../data/feedActions.js'
 
 const route = useRoute()
 const shareMessage = ref("")
 const post = ref(null)
 const relatedPosts = ref([])
 const loadError = ref(false)
+
+// Author profile route (linked from bylines/avatar)
+const authorRouteId = computed(() => {
+  const name = post.value?.author?.name
+  if (!name) return ''
+  return `author-${name.toLowerCase().replace(/\s+/g, '-')}`
+})
 
 // Guest browsing: visitors see a preview, then the login wall gates member actions.
 const currentUser = inject('currentUser')
@@ -28,21 +36,22 @@ onMounted(async () => {
 })
 
 // Like state (clap is persisted server-side via the public clap endpoint)
-const isLiked = ref(false)
+const isLiked = ref(isArticleLiked(route.params.id))
 const likeCount = computed(() => post.value?.likes ?? post.value?.claps ?? 0)
 
 const toggleLike = async () => {
   if (isGuest.value) return openWall({ kind: 'like' })
   if (!post.value) return
-  const prev = isLiked.value
-  isLiked.value = !prev
+  const likedNow = toggleLikeArticle(post.value.id)
+  isLiked.value = likedNow
   // optimistic update; the clap endpoint persists the new count
   try {
     const { clapArticle } = await import('../api/client.js')
     const res = await clapArticle(post.value.id)
     if (res.data?.data) post.value.claps = res.data.data.claps
   } catch {
-    isLiked.value = prev // revert on failure
+    toggleLikeArticle(post.value.id) // roll back localStorage on failure
+    isLiked.value = !likedNow
   }
 }
 
@@ -158,16 +167,16 @@ const submitComment = () => {
         </h1>
 
         <div class="flex items-center gap-3 mb-6">
-          <div class="w-10 h-10 bg-[#111418] flex items-center justify-center shrink-0 rounded-full">
+          <RouterLink :to="`/author/${authorRouteId}`" class="w-10 h-10 bg-[#111418] flex items-center justify-center shrink-0 rounded-full no-underline">
             <span class="text-white text-xs font-bold">{{ post.author.initials }}</span>
-          </div>
+          </RouterLink>
           <div>
-            <p class="text-sm font-semibold text-[#111418]">
+            <RouterLink :to="`/author/${authorRouteId}`" class="text-sm font-semibold text-[#111418] hover:text-[#8b1e21] transition-colors no-underline">
               {{ post.author.name }}
               <span class="text-[#8b1e21] text-xs font-bold ml-1">
                 {{ post.author.credential }}
               </span>
-            </p>
+            </RouterLink>
             <p class="text-[11px] text-slate-400">{{ post.author.role }}</p>
           </div>
         </div>
@@ -293,16 +302,16 @@ const submitComment = () => {
 
         <!-- Author Bio -->
         <div class="mt-10 p-6 border border-[#eae8e4] bg-[#faf9f5] flex gap-5 rounded-lg">
-          <div class="w-14 h-14 bg-[#111418] flex items-center justify-center shrink-0 rounded-full">
+          <RouterLink :to="`/author/${authorRouteId}`" class="w-14 h-14 bg-[#111418] flex items-center justify-center shrink-0 rounded-full no-underline">
             <span class="text-white text-sm font-bold">{{ post.author.initials }}</span>
-          </div>
+          </RouterLink>
           <div>
-            <p class="text-sm font-bold text-[#111418] mb-0.5">
+            <RouterLink :to="`/author/${authorRouteId}`" class="text-sm font-bold text-[#111418] hover:text-[#8b1e21] transition-colors no-underline">
               {{ post.author.name }}
               <span class="text-[#8b1e21] text-xs font-bold ml-1">
                 {{ post.author.credential }}
               </span>
-            </p>
+            </RouterLink>
             <p class="text-[11px] text-[#8b1e21] uppercase tracking-[1.5px] font-semibold mb-3">
               {{ post.author.role }}
             </p>
