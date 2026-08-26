@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, onMounted, watch, inject } from 'vue'
-import { Icon } from '@iconify/vue'
 import FeedTabs from '../components/feed/FeedTabs.vue'
 import ArticleCard from '../components/feed/ArticleCard.vue'
 import RightSidebar from '../components/feed/RightSidebar.vue'
@@ -126,23 +125,6 @@ watch(activeTab, () => {
     <div class="flex gap-8">
 
       <div class="flex-1 min-w-0">
-        <!-- Compact "your tier" strip linking to the Membership page -->
-        <RouterLink
-          v-if="!isGuest"
-          to="/membership"
-          class="mb-6 flex items-center justify-between gap-3 rounded-md border border-[#eae8e4] bg-white px-4 py-3 no-underline group"
-        >
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="w-7 h-7 rounded-full bg-[#111418] flex items-center justify-center shrink-0">
-              <Icon icon="lucide:badge-check" class="w-4 h-4 text-[#d86d70]" />
-            </span>
-            <div class="min-w-0">
-              <p class="text-xs font-semibold text-[#111418]">Your membership</p>
-              <p class="text-[11px] text-gray-500 truncate">Manage tier, billing, and benefits</p>
-            </div>
-          </div>
-          <span class="shrink-0 text-xs font-semibold text-[#8b1e21] group-hover:underline">Manage →</span>
-        </RouterLink>
         <FeedTabs v-model:activeTab="activeTab" />
 
         <!-- Guest prompt banner (dismissible) -->
