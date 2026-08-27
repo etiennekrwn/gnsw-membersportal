@@ -19,6 +19,7 @@ import Profile from '../pages/Profile.vue'
 import Membership from '../pages/Membership.vue'
 import AuthorProfile from '../pages/AuthorProfile.vue'
 import Settings from '../pages/Settings.vue'
+import Following from '../pages/Following.vue'
 import PublishedPost from '../pages/PublishedPost.vue'
 import SearchResults from '../pages/SearchResults.vue'
 
@@ -75,6 +76,7 @@ const routes = [
       { path: 'membership', name: 'Membership', component: Membership },
       { path: 'author/:id', name: 'AuthorProfile', component: AuthorProfile },
       { path: 'settings', name: 'Settings', component: Settings },
+      { path: 'following', name: 'Following', component: Following },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: { name: 'Dashboard' } },

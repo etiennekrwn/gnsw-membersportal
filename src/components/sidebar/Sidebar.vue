@@ -20,7 +20,8 @@ const MEMBER_NAV = [
   { label: 'Events',     to: '/events',       icon: 'lucide:calendar' },
   { label: 'Profile',    to: '/profile',      icon: 'lucide:user' },
   { label: 'Membership', to: '/membership',   icon: 'lucide:badge-check' },
-  { label: 'Settings',   to: '/settings',     icon: 'lucide:settings' },
+  { label: 'Settings',   to: '/settings',     icon: 'lucide:settings', dividerAfter: true },
+  { label: 'Following',  to: '/following',    icon: 'lucide:heart' },
 ]
 
 const navItems = computed(() => (isGuest.value ? [{ label: 'Home', to: '/', icon: 'lucide:house' }] : MEMBER_NAV))
@@ -73,22 +74,26 @@ function closeOnSmallScreen() {
 
     <!-- Nav links -->
     <nav class="flex flex-col gap-1 px-3 py-4">
-      <RouterLink
-        v-for="item in navItems"
-        :key="item.label"
-        :to="item.to"
-        @click="closeOnSmallScreen"
-        class="flex items-center gap-3.5 px-3 py-2.5 rounded-md text-sm text-gray-600 hover:text-[#111418] hover:bg-[#faf9f5] transition-colors no-underline group"
-        active-class="text-[#111418] font-medium bg-[#faf9f5]"
-      >
-        <Icon
-          :icon="item.icon"
-          width="20"
-          height="20"
-          class="text-gray-400 group-hover:text-[#111418] transition-colors"
+      <template v-for="item in navItems" :key="item.label">
+        <RouterLink
+          :to="item.to"
+          @click="closeOnSmallScreen"
+          class="flex items-center gap-3.5 px-3 py-2.5 rounded-md text-sm text-gray-600 hover:text-[#111418] hover:bg-[#faf9f5] transition-colors no-underline group"
+          active-class="text-[#111418] font-medium bg-[#faf9f5]"
+        >
+          <Icon
+            :icon="item.icon"
+            width="20"
+            height="20"
+            class="text-gray-400 group-hover:text-[#111418] transition-colors"
+          />
+          <span>{{ item.label }}</span>
+        </RouterLink>
+        <div
+          v-if="item.dividerAfter"
+          class="my-2 border-t border-[#eae8e4]"
         />
-        <span>{{ item.label }}</span>
-      </RouterLink>
+      </template>
     </nav>
 
     <!-- Guest join CTA -->

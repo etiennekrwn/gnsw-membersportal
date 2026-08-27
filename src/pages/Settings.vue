@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
+import PasswordField from '../components/ui/PasswordField.vue'
 import apiClient, {
   getMyPreferences,
   updateMyPreferences,
@@ -367,25 +368,28 @@ onMounted(() => {
             <div class="space-y-3 max-w-sm">
               <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Current password</label>
-                <input
+                <PasswordField
                   v-model="currentPassword"
-                  type="password"
+                  name="currentPassword"
+                  autocomplete="current-password"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
                 />
               </div>
               <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">New password</label>
-                <input
+                <PasswordField
                   v-model="newPassword"
-                  type="password"
+                  name="newPassword"
+                  autocomplete="new-password"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
                 />
               </div>
               <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Confirm new password</label>
-                <input
+                <PasswordField
                   v-model="confirmPassword"
-                  type="password"
+                  name="confirmPassword"
+                  autocomplete="new-password"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#8b1e21] transition"
                 />
               </div>
@@ -419,9 +423,10 @@ onMounted(() => {
             <div class="space-y-3 max-w-sm">
               <div>
                 <label class="text-xs font-medium text-gray-600 mb-1 block">Confirm your password</label>
-                <input
+                <PasswordField
                   v-model="deletePassword"
-                  type="password"
+                  name="deletePassword"
+                  autocomplete="current-password"
                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-red-500 transition"
                 />
               </div>
