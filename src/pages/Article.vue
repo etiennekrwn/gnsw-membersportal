@@ -4,13 +4,14 @@ import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { getArticle, getFeedArticles } from '../api/client.js'
 import ArticleBody from '../components/article/ArticleBody.vue'
-import { isArticleLiked, toggleLikeArticle } from '../data/feedActions.js'
+import { isArticleLiked, toggleLikeArticle, isArticleSaved, toggleSaveArticle, isAuthorFollowed, toggleFollowAuthor } from '../data/feedActions.js'
 
 const route = useRoute()
 const shareMessage = ref("")
 const post = ref(null)
 const relatedPosts = ref([])
 const loadError = ref(false)
+const loading = ref(true)
 
 // Author profile route (linked from bylines/avatar)
 const authorRouteId = computed(() => {
@@ -28,6 +29,10 @@ onMounted(async () => {
   try {
     const res = await getArticle(route.params.id)
     post.value = res.data?.data || null
+    if (post.value) {
+      isSaved.value = isArticleSaved(post.value.id)
+      isFollowing.value = !!post.value.author?.name && isAuthorFollowed(post.value.author.name)
+    }
     // Related posts come from the live feed: same author first, then others.
     try {
       const feedRes = await getFeedArticles()
@@ -39,12 +44,30 @@ onMounted(async () => {
     }
   } catch {
     loadError.value = true
+  } finally {
+    loading.value = false
   }
 })
 
 // Like state (clap is persisted server-side via the public clap endpoint)
 const isLiked = ref(isArticleLiked(route.params.id))
 const likeCount = computed(() => post.value?.likes ?? post.value?.claps ?? 0)
+
+// Save state
+const isSaved = ref(false)
+const toggleSave = () => {
+  if (isGuest.value) return openWall({ kind: 'save' })
+  if (!post.value) return
+  isSaved.value = toggleSaveArticle(post.value.id)
+}
+
+// Follow state
+const isFollowing = ref(false)
+const toggleFollow = () => {
+  if (isGuest.value) return openWall({ kind: 'follow' })
+  if (!post.value?.author?.name) return
+  isFollowing.value = toggleFollowAuthor(post.value.author.name)
+}
 
 const toggleLike = async () => {
   if (isGuest.value) return openWall({ kind: 'like' })
@@ -139,7 +162,27 @@ const submitComment = () => {
 
 <template>
   <div class="max-w-3xl mx-auto px-6 py-8">
-    <template v-if="post">
+    <!-- Loading skeleton -->
+    <div v-if="loading" class="animate-pulse">
+      <div class="mb-6 h-3 w-24 bg-[#eae8e4] rounded"></div>
+      <div class="mb-6 h-4 w-32 bg-[#eae8e4] rounded"></div>
+      <div class="mb-6 h-10 w-3/4 bg-[#eae8e4] rounded"></div>
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-[#eae8e4]"></div>
+        <div class="space-y-2">
+          <div class="h-3 w-40 bg-[#eae8e4] rounded"></div>
+          <div class="h-3 w-24 bg-[#eae8e4] rounded"></div>
+        </div>
+      </div>
+      <div class="aspect-[16/9] bg-[#eae8e4] rounded-lg mb-8"></div>
+      <div class="space-y-3">
+        <div class="h-3 w-full bg-[#eae8e4] rounded"></div>
+        <div class="h-3 w-full bg-[#eae8e4] rounded"></div>
+        <div class="h-3 w-4/5 bg-[#eae8e4] rounded"></div>
+      </div>
+    </div>
+
+    <template v-else-if="post">
       <!-- Breadcrumb -->
       <div class="mb-6 flex items-center gap-2 text-[10px] uppercase tracking-[2px] text-slate-400">
         <RouterLink
@@ -186,6 +229,15 @@ const submitComment = () => {
             </RouterLink>
             <p class="text-[11px] text-slate-400">{{ post.author.role }}</p>
           </div>
+          <button
+            type="button"
+            class="ml-auto shrink-0 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[1.5px] transition-colors cursor-pointer"
+            :class="isFollowing ? 'text-[#8b1e21] border border-[#8b1e21]/30 bg-[#8b1e21]/5' : 'text-[#111418] border border-[#111418]/20 hover:border-[#111418]/50'"
+            @click="toggleFollow"
+          >
+            <Icon :icon="isFollowing ? 'lucide:user-check' : 'lucide:user-plus'" class="w-3.5 h-3.5" />
+            {{ isFollowing ? 'Following' : 'Follow' }}
+          </button>
         </div>
 
         <!-- Engagement bar: top -->
@@ -204,6 +256,15 @@ const submitComment = () => {
               <Icon icon="lucide:eye" class="w-4 h-4" />
               {{ viewCount.toLocaleString() }}
             </div>
+            <button
+              type="button"
+              class="flex items-center gap-1.5 text-[11px] font-semibold transition-colors"
+              :class="isSaved ? 'text-[#8b1e21]' : 'text-slate-400 hover:text-[#111418]'"
+              @click="toggleSave"
+            >
+              <Icon :icon="isSaved ? 'lucide:bookmark' : 'lucide:bookmark'" :fill="isSaved ? 'currentColor' : 'none'" class="w-4 h-4" />
+              {{ isSaved ? 'Saved' : 'Save' }}
+            </button>
             <a
               href="#comments"
               class="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-[#111418] transition-colors"

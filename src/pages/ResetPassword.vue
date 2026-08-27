@@ -16,9 +16,10 @@
       <form @submit.prevent="handleSubmit" v-if="!success" class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1.5">New Password</label>
-          <input
+          <PasswordField
             v-model="form.password"
-            type="password"
+            name="password"
+            autocomplete="new-password"
             required
             minlength="8"
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
@@ -27,9 +28,10 @@
 
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1.5">Confirm New Password</label>
-          <input
+          <PasswordField
             v-model="form.passwordConfirmation"
-            type="password"
+            name="passwordConfirmation"
+            autocomplete="new-password"
             required
             minlength="8"
             class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
@@ -64,6 +66,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import apiClient from '../api/client.js'
+import PasswordField from '../components/ui/PasswordField.vue'
 
 const route = useRoute()
 const token = ref('')

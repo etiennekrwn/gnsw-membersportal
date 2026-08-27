@@ -20,9 +20,11 @@
 
       <div class="mb-4">
         <label class="block text-xs font-medium text-gray-600 mb-1.5">Password</label>
-        <input
+        <PasswordField
           v-model="form.password"
-          type="password"
+          name="password"
+          autocomplete="current-password"
+          placeholder=""
           class="w-full border border-[#eae8e4] rounded-md px-3 py-2.5 text-sm text-[#111418] outline-none focus:border-[#8b1e21] transition-colors"
         />
       </div>
@@ -88,6 +90,7 @@
 import { ref, inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import apiClient from '../api/client.js'
+import PasswordField from '../components/ui/PasswordField.vue'
 
 const setCurrentUser = inject('setCurrentUser')
 const router = useRouter()
