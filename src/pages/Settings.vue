@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
@@ -209,7 +209,7 @@ onMounted(() => {
         <div v-if="activeSection === 'notifications'" class="space-y-4">
           <div class="border border-[#eae8e4] rounded-xl p-6 bg-white">
             <h2 class="text-sm font-bold text-[#111418] mb-1">Email Notifications</h2>
-            <p class="text-xs text-gray-400 mb-5">Control which emails you receive from GNSW.</p>
+            <p class="text-xs text-gray-400 mb-5">Control which emails you receive from GNS.</p>
 
             <div class="space-y-4">
               <div class="flex items-center justify-between">

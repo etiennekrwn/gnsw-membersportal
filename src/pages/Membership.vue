@@ -8,7 +8,7 @@ const currentUser = inject('currentUser')
 const TIER_META = {
   ROLE_ASSOCIATE: {
     label: 'Associate',
-    short: 'AGNSW',
+    short: 'AGNS',
     benefits: [
       'Tier 1 learning content and courses',
       'Access to summits and online sessions',
@@ -18,7 +18,7 @@ const TIER_META = {
   },
   ROLE_MEMBER: {
     label: 'Member',
-    short: 'PGNSW',
+    short: 'PGNS',
     benefits: [
       'Everything in Associate',
       'Unlimited article publishing',
@@ -28,7 +28,7 @@ const TIER_META = {
   },
   ROLE_FELLOW: {
     label: 'Fellow',
-    short: 'FGNSW',
+    short: 'FGNS',
     benefits: [
       'Everything in Member',
       'Fellow-only masterclasses',
@@ -40,7 +40,7 @@ const TIER_META = {
 
 const tierMeta = computed(() => {
   const t = currentUser?.value?.tier
-  return TIER_META[t] || { label: 'Member', short: 'PGNSW', benefits: [] }
+  return TIER_META[t] || { label: 'Member', short: 'PGNS', benefits: [] }
 })
 
 const mainSiteUrl = (import.meta.env.VITE_MAIN_SITE_URL || 'http://localhost:5173').replace(/\/$/, '')

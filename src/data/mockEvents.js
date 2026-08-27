@@ -1,7 +1,7 @@
 export const mockEvents = [
   {
     id: 1,
-    title: 'GNSW Annual Speechwriting Summit 2025',
+    title: 'GNS Annual Speechwriting Summit 2025',
     type: 'Summit',
     date: 'Jul 14, 2025',
     time: '10:00 AM',

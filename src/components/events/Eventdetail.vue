@@ -21,7 +21,7 @@ function loadEvent(id) {
   allEvents.value = getEvents()
   event.value = getEventById(id)
   // Check if user already RSVP'd (persisted in localStorage)
-  rsvpDone.value = !!localStorage.getItem(`gnsw_rsvp_${id}`)
+  rsvpDone.value = !!localStorage.getItem(`gns_rsvp_${id}`)
 }
 
 function handleRsvp() {
@@ -29,7 +29,7 @@ function handleRsvp() {
   if (event.value?.access === 'members' && !currentUser.value) {
     return openWall({ kind: 'article' })
   }
-  localStorage.setItem(`gnsw_rsvp_${event.value.id}`, JSON.stringify({
+  localStorage.setItem(`gns_rsvp_${event.value.id}`, JSON.stringify({
     userId: currentUser.value?.id,
     userName: currentUser.value?.name,
     eventId: event.value.id,
@@ -40,7 +40,7 @@ function handleRsvp() {
 }
 
 function cancelRsvp() {
-  localStorage.removeItem(`gnsw_rsvp_${event.value.id}`)
+  localStorage.removeItem(`gns_rsvp_${event.value.id}`)
   rsvpDone.value = false
 }
 

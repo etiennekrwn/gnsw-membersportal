@@ -1,8 +1,8 @@
 import { publishArticle } from '../api/client.js'
 
-const DRAFTS_KEY = 'gnsw_drafts'
-const PUBLISHED_KEY = 'gnsw_published'
-const HIDDEN_DRAFT_IDS_KEY = 'gnsw_hidden_draft_ids'
+const DRAFTS_KEY = 'gns_drafts'
+const PUBLISHED_KEY = 'gns_published'
+const HIDDEN_DRAFT_IDS_KEY = 'gns_hidden_draft_ids'
 
 // A shareable, neutral placeholder used only for DISPLAY in editor/preview
 // when a draft has no cover image. Never persisted or sent to the server.

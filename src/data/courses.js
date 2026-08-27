@@ -56,7 +56,7 @@ export function getContinueLessonRoute(course) {
 }
 
 // --- Lightweight, per-member course progress persisted locally ---
-const PROGRESS_KEY = 'gnsw_course_progress'
+const PROGRESS_KEY = 'gns_course_progress'
 
 function loadProgressMap() {
   try {

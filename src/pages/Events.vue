@@ -14,7 +14,7 @@ const filterTabs = ['All', 'Featured Summit', 'Workshop', 'Public Lecture', 'Gui
 
 const filteredEvents = computed(() => {
   if (activeFilter.value === 'Reserved') {
-    return events.value.filter((e) => !!localStorage.getItem(`gnsw_rsvp_${e.id}`))
+    return events.value.filter((e) => !!localStorage.getItem(`gns_rsvp_${e.id}`))
   }
   if (activeFilter.value === 'All') return events.value
   return events.value.filter((e) => e.type === activeFilter.value)

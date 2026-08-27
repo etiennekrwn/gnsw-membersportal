@@ -260,7 +260,7 @@ onMounted(() => {
             </span>
             <span class="w-[3px] h-[3px] rounded-full bg-slate-300"></span>
             <span class="text-[10.5px] uppercase tracking-widest text-slate-300">
-              {{ currentUser?.professionalId || professionalId || currentUser?.tierShort || 'GNSW-MEMBER' }}
+              {{ currentUser?.professionalId || professionalId || currentUser?.tierShort || 'GNS-MEMBER' }}
             </span>
           </div>
 
@@ -474,11 +474,11 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Why I Joined GNSW -->
+    <!-- Why I Joined GNS -->
     <div v-if="reasonForJoining" class="bg-white border border-[#eae8e4] p-6 mb-6">
       <h2 class="text-[10.5px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 mb-3">
         <Icon icon="lucide:heart" class="w-3.5 h-3.5 text-[#8b1e21]" />
-        Why I joined GNSW
+        Why I joined GNS
       </h2>
       <p class="text-sm text-slate-700 leading-relaxed">{{ reasonForJoining }}</p>
     </div>

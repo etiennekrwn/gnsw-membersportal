@@ -1,7 +1,7 @@
-const SAVED_KEY = 'gnsw_saved_articles'
-const MUTED_KEY = 'gnsw_muted_authors'
-const FOLLOWED_KEY = 'gnsw_followed_authors'
-const LIKED_KEY = 'gnsw_liked_articles'
+const SAVED_KEY = 'gns_saved_articles'
+const MUTED_KEY = 'gns_muted_authors'
+const FOLLOWED_KEY = 'gns_followed_authors'
+const LIKED_KEY = 'gns_liked_articles'
 
 function loadSet(key) {
   try {

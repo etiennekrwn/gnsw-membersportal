@@ -1,8 +1,8 @@
-# GNSW Members Portal — What It Is
+# GNS Members Portal — What It Is
 
-**GNSW** stands for **Guild of Nigerian Speechwriters**. It's a professional association for people who write speeches in Nigeria (speechwriters for politicians, executives, diplomats, etc.).
+**GNS** stands for **Guild of Nigerian Speechwriters**. It's a professional association for people who write speeches in Nigeria (speechwriters for politicians, executives, diplomats, etc.).
 
-The **GNSW Members Portal** is a private, online dashboard where members of this guild can:
+The **GNS Members Portal** is a private, online dashboard where members of this guild can:
 
 - Read articles written by other guild members
 - Write and publish their own speeches and articles
@@ -21,9 +21,9 @@ There are 3 levels of membership:
 
 | Tier | Abbreviation | Publishing Limit |
 |---|---|---|
-| Associate | AGNSW | 3 articles per month |
-| Partner | PGNSW | Unlimited |
-| Fellow | FGNSW | Unlimited |
+| Associate | AGNS | 3 articles per month |
+| Partner | PGNS | Unlimited |
+| Fellow | FGNS | Unlimited |
 
 Higher tiers unlock more features (like certain courses).
 
