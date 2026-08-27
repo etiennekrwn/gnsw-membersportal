@@ -2,8 +2,7 @@
 import { computed, inject, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { getArticle } from '../api/client.js'
-import { getRelatedArticles } from '../data/mockArticles.js'
+import { getArticle, getFeedArticles } from '../api/client.js'
 import ArticleBody from '../components/article/ArticleBody.vue'
 import { isArticleLiked, toggleLikeArticle } from '../data/feedActions.js'
 
@@ -29,7 +28,15 @@ onMounted(async () => {
   try {
     const res = await getArticle(route.params.id)
     post.value = res.data?.data || null
-    relatedPosts.value = getRelatedArticles(route.params.id, 3)
+    // Related posts come from the live feed: same author first, then others.
+    try {
+      const feedRes = await getFeedArticles()
+      const feed = (feedRes.data?.data || []).filter(a => String(a.id) !== String(route.params.id))
+      const sameAuthor = feed.filter(a => a.author?.name && a.author.name === post.value?.author?.name)
+      relatedPosts.value = [...sameAuthor, ...feed.filter(a => !sameAuthor.includes(a))].slice(0, 3)
+    } catch {
+      relatedPosts.value = []
+    }
   } catch {
     loadError.value = true
   }

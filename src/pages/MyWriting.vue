@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import EmptyState from '../components/ui/EmptyState.vue'
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import {
   getDrafts,
   getPublished,
@@ -18,10 +19,14 @@ const activeTab = ref('Drafts')
 const tabs = ['Drafts', 'Published']
 const openMenuId = ref(null)
 const toast = ref('')
-const fallbackThumbnail = 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=900'
 
 const drafts = ref([])
 const published = ref([])
+
+// --- Confirmation dialog state ---
+const confirmState = ref({ open: false, title: '', message: '', danger: true, action: null })
+// --- Publish busy-lock: prevents double-submit creating duplicate posts ---
+const publishingId = ref(null)
 
 watch(
   () => route.query.tab,
@@ -66,14 +71,33 @@ function closeMenu() {
   openMenuId.value = null
 }
 
+function requestConfirm({ title, message, action, danger = true }) {
+  confirmState.value = { open: true, title, message, danger, action }
+}
+
+function onConfirm() {
+  const { action } = confirmState.value
+  confirmState.value = { ...confirmState.value, open: false }
+  if (action) action()
+}
+
+function onCancelConfirm() {
+  confirmState.value = { ...confirmState.value, open: false }
+}
+
 function handleDelete(id, event) {
   event.stopPropagation()
-  if (confirm('Delete this draft? This cannot be undone.')) {
-    deleteDraft(id)
-    refreshLists()
-    showToast('Draft deleted')
-  }
   closeMenu()
+  requestConfirm({
+    title: 'Delete this draft?',
+    message: 'This draft will be permanently removed. This cannot be undone.',
+    confirmText: 'Delete',
+    action: () => {
+      deleteDraft(id)
+      refreshLists()
+      showToast('Draft deleted')
+    },
+  })
 }
 
 function handleEdit(id, event) {
@@ -84,6 +108,10 @@ function handleEdit(id, event) {
 
 async function handlePublish(id, event) {
   event.stopPropagation()
+  // Busy-lock: ignore repeat clicks while a publish for this draft is in flight,
+  // so double-clicking cannot create duplicate feed posts.
+  if (publishingId.value !== null) return
+  publishingId.value = id
   try {
     const result = await publishDraft(id)
     if (!result.ok) {
@@ -95,6 +123,8 @@ async function handlePublish(id, event) {
     }
   } catch (err) {
     showToast('Could not publish due to network issues. Please try again.')
+  } finally {
+    publishingId.value = null
   }
   closeMenu()
 }
@@ -135,24 +165,37 @@ function handleEditPublished(post, event) {
 
 function handleUnpublish(id, event) {
   event.stopPropagation()
-  const result = unpublishPost(id)
-  if (result.ok) {
-    refreshLists()
-    showToast('Post unpublished')
-  } else {
-    showToast(result.error)
-  }
   closeMenu()
+  requestConfirm({
+    title: 'Unpublish this post?',
+    message: 'The post will move back to your drafts and disappear from the community feed.',
+    danger: false,
+    confirmText: 'Unpublish',
+    action: () => {
+      const result = unpublishPost(id)
+      if (result.ok) {
+        refreshLists()
+        showToast('Post unpublished')
+      } else {
+        showToast(result.error)
+      }
+    },
+  })
 }
 
 function handleDeletePublished(id, event) {
   event.stopPropagation()
-  if (confirm('Delete this published post? This cannot be undone.')) {
-    deletePublished(id)
-    refreshLists()
-    showToast('Published post deleted')
-  }
   closeMenu()
+  requestConfirm({
+    title: 'Delete this published post?',
+    message: 'This will remove it from your published list. This cannot be undone.',
+    confirmText: 'Delete',
+    action: () => {
+      deletePublished(id)
+      refreshLists()
+      showToast('Published post deleted')
+    },
+  })
 }
 
 onMounted(() => {
@@ -254,18 +297,34 @@ onUnmounted(() => {
                 @click.stop
               >
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#faf9f5]" @click="handleEdit(draft.id, $event)">Edit</button>
-                <button type="button" class="w-full text-left px-4 py-2 text-sm text-[#8b1e21] hover:bg-[#faf9f5] font-medium" @click="handlePublish(draft.id, $event)">Publish</button>
+                <button type="button" class="w-full text-left px-4 py-2 text-sm text-[#8b1e21] hover:bg-[#faf9f5] font-medium disabled:opacity-50" :disabled="publishingId === draft.id" @click="handlePublish(draft.id, $event)">
+                  {{ publishingId === draft.id ? 'Publishing…' : 'Publish' }}
+                </button>
                 <button type="button" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" @click="handleDelete(draft.id, $event)">Delete</button>
               </div>
             </div>
 
-            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
-              <img :src="draft.coverImage || draft.thumbnail || fallbackThumbnail" :alt="draft.title" class="w-full h-full object-cover" />
+            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-[#faf9f5] border border-dashed border-gray-300 flex items-center justify-center">
+              <img v-if="draft.coverImage || (draft.thumbnail && draft.thumbnail !== '')" :src="draft.coverImage || draft.thumbnail" :alt="draft.title" class="w-full h-full object-cover" />
+              <span v-else class="flex flex-col items-center gap-1 text-gray-400 px-2">
+                <Icon icon="lucide:image-off" class="w-5 h-5" />
+                <span class="text-[9px] uppercase tracking-wider font-semibold">No cover image</span>
+              </span>
             </div>
           </div>
         </article>
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="confirmState.open"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      :danger="confirmState.danger"
+      confirm-text="Confirm"
+      @confirm="onConfirm"
+      @cancel="onCancelConfirm"
+    />
 
     <div v-if="activeTab === 'Published'">
       <div class="mb-6">
@@ -326,8 +385,12 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-gray-100">
-              <img :src="post.coverImage || post.thumbnail || fallbackThumbnail" :alt="post.title" class="w-full h-full object-cover" />
+            <div class="w-24 h-24 sm:w-28 sm:h-28 overflow-hidden bg-[#faf9f5] border border-dashed border-gray-300 flex items-center justify-center">
+              <img v-if="post.coverImage || (post.thumbnail && post.thumbnail !== '')" :src="post.coverImage || post.thumbnail" :alt="post.title" class="w-full h-full object-cover" />
+              <span v-else class="flex flex-col items-center gap-1 text-gray-400 px-2">
+                <Icon icon="lucide:image-off" class="w-5 h-5" />
+                <span class="text-[9px] uppercase tracking-wider font-semibold">No cover image</span>
+              </span>
             </div>
           </div>
         </article>

@@ -4,7 +4,15 @@ const DRAFTS_KEY = 'gnsw_drafts'
 const PUBLISHED_KEY = 'gnsw_published'
 const HIDDEN_DRAFT_IDS_KEY = 'gnsw_hidden_draft_ids'
 
-const DEFAULT_THUMBNAIL = 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=900'
+// A shareable, neutral placeholder used only for DISPLAY in editor/preview
+// when a draft has no cover image. Never persisted or sent to the server.
+export const NO_COVER_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360">' +
+  '<rect width="640" height="360" fill="#f3f1ec"/>' +
+  '<g fill="none" stroke="#c9c5bc" stroke-width="6"><rect x="240" y="120" width="160" height="120" rx="10"/><circle cx="288" cy="164" r="14"/><path d="M252 224l44-44 32 32 30-30 42 42"/></g>' +
+  '<text x="320" y="292" font-family="sans-serif" font-size="18" fill="#a8a49b" text-anchor="middle">No cover image yet</text>' +
+  '</svg>'
+)
 
 function loadJson(key, fallback = []) {
   try {
@@ -87,7 +95,7 @@ export function createDraft({
   title = 'Untitled Draft',
   excerpt = '',
   body = '',
-  thumbnail = DEFAULT_THUMBNAIL,
+  thumbnail = null,
   slug = '',
   categories = [],
   tags = [],
@@ -98,7 +106,7 @@ export function createDraft({
     title,
     excerpt: excerpt || body.replace(/<[^>]*>/g, ' ').slice(0, 120).trim(),
     body,
-    thumbnail: thumbnail || DEFAULT_THUMBNAIL,
+    thumbnail: thumbnail ?? null,
     slug: slug || generateSlug(title),
     categories,
     tags,
@@ -156,7 +164,7 @@ export function duplicateDraft(id) {
     title: `${source.title} (Copy)`,
     excerpt: source.excerpt,
     body: source.body ?? '',
-    thumbnail: source.thumbnail || DEFAULT_THUMBNAIL,
+    thumbnail: source.thumbnail || null,
     slug: '',
     categories: source.categories ?? [],
     coverImage: source.coverImage ?? null,
@@ -187,6 +195,9 @@ export async function publishDraft(id) {
   if (!title) return { ok: false, error: 'Add a title before publishing.' }
   if (!body) return { ok: false, error: 'Add content before publishing.' }
   if (wordCount(body) < 50) return { ok: false, error: 'Draft needs at least 50 words before publishing.' }
+  if (!draft.coverImage && !extractFirstImageSrc(body)) {
+    return { ok: false, error: 'Add a cover image before publishing. Incomplete drafts cannot be published.' }
+  }
 
   // Auto-extract cover image from body if not manually set
   let coverImage = draft.coverImage ?? null
@@ -206,7 +217,7 @@ export async function publishDraft(id) {
       tags: draft.tags ?? [],
       tag: 'For You',
       category: null,
-      thumbnailUrl: draft.thumbnail || DEFAULT_THUMBNAIL,
+      thumbnailUrl: draft.coverImage || draft.thumbnail || null,
       imageUrl: coverImage,
       readTime: Math.max(1, Math.ceil(wordCount(body) / 200)),
       status: 'PUBLISHED',
@@ -236,7 +247,7 @@ export async function publishDraft(id) {
     claps: serverArticle.claps ?? 0,
     views: serverArticle.views ?? 0,
     status: 'Published',
-    thumbnail: serverArticle.thumbnailUrl || draft.thumbnail || DEFAULT_THUMBNAIL,
+    thumbnail: serverArticle.thumbnailUrl || draft.thumbnail || null,
   }
 
   const stored = loadStoredPublished()
@@ -263,7 +274,7 @@ export function unpublishPost(id) {
     title: post.title,
     excerpt: post.excerpt || '',
     body: post.body || '',
-    thumbnail: post.thumbnail || DEFAULT_THUMBNAIL,
+    thumbnail: post.thumbnail || null,
     slug: post.slug || generateSlug(post.title),
     categories: post.categories ?? [],
     coverImage: post.coverImage ?? null,

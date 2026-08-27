@@ -1,6 +1,7 @@
 ﻿<script setup>
 import { ref, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import apiClient, {
   getMyPreferences,
   updateMyPreferences,
@@ -25,6 +26,8 @@ const settings = ref({
 })
 
 const saved = ref(false)
+const settingsError = ref('')
+const deleteConfirmOpen = ref(false)
 const activeSection = ref('notifications')
 
 // Password change
@@ -85,7 +88,8 @@ async function saveSettingsData() {
     saved.value = true
     setTimeout(() => { saved.value = false }, 2000)
   } catch (err) {
-    alert(err.message || 'Could not save settings.')
+    settingsError.value = err.message || 'Could not save settings.'
+    setTimeout(() => { settingsError.value = '' }, 4000)
   }
 }
 
@@ -136,6 +140,10 @@ async function handleChangePassword() {
   }
 }
 
+function requestDeleteAccount() {
+  deleteConfirmOpen.value = true
+}
+
 async function handleDeleteAccount() {
   deleteError.value = ''
   deleteSuccess.value = false
@@ -143,7 +151,7 @@ async function handleDeleteAccount() {
     deleteError.value = 'Enter your password to confirm.'
     return
   }
-  if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return
+  deleteConfirmOpen.value = false
   deleteSubmitting.value = true
   try {
     await requestAccountDeletion({ password: deletePassword.value })
@@ -169,6 +177,7 @@ onMounted(() => {
         <p class="text-gray-500 text-sm">Manage notifications, preferences, and your account.</p>
       </div>
       <p v-if="saved" class="text-xs font-semibold text-[#8b1e21] shrink-0">Settings saved</p>
+      <p v-if="settingsError" class="text-xs font-semibold text-red-600 shrink-0">{{ settingsError }}</p>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-8">
@@ -422,7 +431,7 @@ onMounted(() => {
                 type="button"
                 :disabled="deleteSubmitting"
                 class="text-xs font-semibold text-white bg-red-600 px-4 py-2 hover:bg-red-700 transition disabled:opacity-50"
-                @click="handleDeleteAccount"
+                @click="requestDeleteAccount"
               >
                 {{ deleteSubmitting ? 'Submitting…' : 'Delete Account' }}
               </button>
@@ -432,5 +441,14 @@ onMounted(() => {
 
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="deleteConfirmOpen"
+      title="Delete your account?"
+      message="This will submit a deletion request for your account. This action cannot be undone."
+      confirm-text="Delete Account"
+      @confirm="handleDeleteAccount"
+      @cancel="deleteConfirmOpen = false"
+    />
   </div>
 </template>

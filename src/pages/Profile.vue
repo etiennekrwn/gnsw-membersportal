@@ -8,6 +8,7 @@ const currentUser = inject('currentUser')
 // Profile edit state
 const isEditing = ref(false)
 const saved = ref(false)
+const saveError = ref('')
 const loading = ref(true)
 
 // Profile form fields
@@ -124,7 +125,8 @@ async function saveProfileData() {
     setTimeout(() => { saved.value = false }, 2500)
   } catch (err) {
     console.error('Failed to save profile:', err)
-    alert('Failed to save profile: ' + (err.message || 'Unknown error'))
+    saveError.value = 'Failed to save profile: ' + (err.message || 'Unknown error')
+    setTimeout(() => { saveError.value = '' }, 4000)
   }
 }
 
@@ -199,10 +201,16 @@ onMounted(() => {
           leave-active-class="transition-all duration-200 ease-in"
           leave-to-class="opacity-0 translate-y-1"
         >
-          <p v-if="saved" class="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
-            <Icon icon="lucide:check-circle" class="w-3.5 h-3.5" />
-            Profile saved
-          </p>
+          <span class="flex items-center gap-2">
+            <p v-if="saved" class="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+              <Icon icon="lucide:check-circle" class="w-3.5 h-3.5" />
+              Profile saved
+            </p>
+            <p v-if="saveError" class="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm">
+              <Icon icon="lucide:triangle-alert" class="w-3.5 h-3.5" />
+              {{ saveError }}
+            </p>
+          </span>
         </Transition>
         <button
           v-if="!isEditing"

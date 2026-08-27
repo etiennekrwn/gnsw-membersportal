@@ -1,17 +1,33 @@
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Icon } from '@iconify/vue'
-import { getAuthorById, getArticlesByAuthor, getAuthorStats } from '../data/authors.js'
+import { getFeedArticles } from '../api/client.js'
+import { findAuthor, getArticlesByAuthor, getAuthorStats } from '../data/authors.js'
 import { isAuthorFollowed, toggleFollowAuthor } from '../data/feedActions.js'
 
 const route = useRoute()
 const currentUser = inject('currentUser')
 const openWall = inject('openWall')
 
-const author = computed(() => getAuthorById(String(route.params.id)))
-const articles = computed(() => (author.value ? getArticlesByAuthor(author.value.name) : []))
-const stats = computed(() => (author.value ? getAuthorStats(author.value.name) : { articleCount: 0, totalClaps: 0 }))
+// Author data is derived live from the community feed.
+const feedArticles = ref([])
+onMounted(async () => {
+  try {
+    const res = await getFeedArticles()
+    feedArticles.value = res.data?.data || []
+  } catch {
+    feedArticles.value = []
+  }
+})
+
+function idToName(id) {
+  return String(id || '').replace(/^author-/, '').replace(/-/g, ' ')
+}
+const authorName = computed(() => idToName(route.params.id))
+const author = computed(() => findAuthor(feedArticles.value, authorName.value))
+const articles = computed(() => (authorName.value ? getArticlesByAuthor(feedArticles.value, authorName.value) : []))
+const stats = computed(() => (authorName.value ? getAuthorStats(feedArticles.value, authorName.value) : { articleCount: 0, totalClaps: 0 }))
 const isGuest = computed(() => !currentUser?.value)
 const followed = computed(() => (author.value ? isAuthorFollowed(author.value.name) : false))
 

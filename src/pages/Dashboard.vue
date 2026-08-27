@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import FeedTabs from '../components/feed/FeedTabs.vue'
 import ArticleCard from '../components/feed/ArticleCard.vue'
 import RightSidebar from '../components/feed/RightSidebar.vue'
@@ -59,10 +59,35 @@ async function loadArticles() {
 
 onMounted(() => {
   loadArticles()
+  // Re-fetch the feed when the tab becomes visible again or the window
+  // regains focus, so posts published by other members show up without a
+  // manual reload. A minimum interval avoids hammering the API.
+  document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener('focus', onFocus)
   setTimeout(() => {
     if (isGuest.value && !guestPromptDismissed.value) showPrompt.value = true
   }, 1200)
 })
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('focus', onFocus)
+})
+
+const FEED_REFRESH_MIN_INTERVAL = 30 * 1000
+let lastFeedFetch = Date.now()
+function refreshFeedIfStale() {
+  const now = Date.now()
+  if (now - lastFeedFetch < FEED_REFRESH_MIN_INTERVAL) return
+  lastFeedFetch = now
+  loadArticles()
+}
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') refreshFeedIfStale()
+}
+function onFocus() {
+  refreshFeedIfStale()
+}
 
 const tabbedArticles = computed(() => {
   const all = articles.value
