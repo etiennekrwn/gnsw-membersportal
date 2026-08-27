@@ -24,6 +24,8 @@
 import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 
+defineOptions({ name: 'PasswordField', inheritAttrs: false })
+
 defineProps({
   modelValue: { type: String, default: '' },
   inputClass: { type: String, default: '' },

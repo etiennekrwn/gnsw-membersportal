@@ -807,7 +807,7 @@ onBeforeRouteLeave((_to, _from, next) => {
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
       @click.self="showCloseModal = false"
     >
-      <div class="bg-white w-full max-w-sm p-6 shadow-xl">
+      <div class="bg-white w-full max-w-sm p-6 shadow-xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <div class="flex items-start gap-3 mb-5">
           <div class="w-8 h-8 shrink-0 flex items-center justify-center bg-amber-50 border border-amber-200">
             <Icon icon="lucide:alert-triangle" class="w-4 h-4 text-amber-500" />

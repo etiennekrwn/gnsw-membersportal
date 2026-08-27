@@ -4,7 +4,7 @@
       <div v-if="open" class="fixed inset-0 z-[100000] flex items-center justify-center p-4" @keydown.esc="$emit('cancel')">
         <div class="absolute inset-0 bg-black/50" @click="$emit('cancel')" />
         <div
-          class="relative bg-white w-full max-w-sm shadow-xl border border-[#eae8e4] p-6"
+          class="relative bg-white w-full max-w-sm shadow-xl border border-[#eae8e4] p-6 max-h-[calc(100dvh-2rem)] overflow-y-auto"
           role="alertdialog"
           aria-modal="true"
           :aria-label="title"

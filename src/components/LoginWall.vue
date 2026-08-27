@@ -71,7 +71,7 @@ function goJoin() {
     @click.self="closeWall"
   >
     <div
-      class="w-full max-w-md bg-[#111418] text-white shadow-2xl border border-white/10 relative p-8 md:p-10 text-center"
+      class="w-full max-w-md bg-[#111418] text-white shadow-2xl border border-white/10 relative p-8 md:p-10 text-center max-h-[calc(100dvh-2rem)] overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
