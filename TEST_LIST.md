@@ -1,4 +1,4 @@
-# GNS Members Portal — QA Test List
+# GNSW Members Portal — QA Test List
 
 Status legend: `[ ]` not run · `[x]` passed · `[!]` failed (note in comments)
 

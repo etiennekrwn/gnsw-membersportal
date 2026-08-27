@@ -19,13 +19,13 @@ const isGuest = computed(() => !currentUser?.value)
 const mainSiteUrl = (import.meta.env.VITE_MAIN_SITE_URL || 'http://localhost:5173').replace(/\/$/, '')
 
 // Guest prompt (dismissible) shown after a short browse
-const guestPromptDismissed = ref(localStorage.getItem('gns_guest_prompt_dismissed') === 'true')
+const guestPromptDismissed = ref(localStorage.getItem('gnsw_guest_prompt_dismissed') === 'true')
 const showPrompt = ref(false)
 
 function dismissGuestPrompt() {
   showPrompt.value = false
   guestPromptDismissed.value = true
-  localStorage.setItem('gns_guest_prompt_dismissed', 'true')
+  localStorage.setItem('gnsw_guest_prompt_dismissed', 'true')
 }
 
 const activeTab = ref('For You')

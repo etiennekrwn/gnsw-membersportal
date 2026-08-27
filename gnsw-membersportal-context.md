@@ -1,8 +1,8 @@
-# GNS Members Portal — Complete Project Context for AI Models
+# GNSW Members Portal — Complete Project Context for AI Models
 
-## 1. WHAT IS GNS?
+## 1. WHAT IS GNSW?
 
-**GNS** stands for **"Guild of Nigerian Speechwriters"** — a professional guild/organization for speechwriters in Nigeria. The GNS Members Portal is a **private, members-only web application** that serves as the digital hub for guild members to:
+**GNSW** stands for **"Guild of Nigerian Speechwriters"** — a professional guild/organization for speechwriters in Nigeria. The GNSW Members Portal is a **private, members-only web application** that serves as the digital hub for guild members to:
 
 - Read articles and writing from fellow members
 - Write, draft, and publish their own speeches and articles
@@ -12,9 +12,9 @@
 - Connect with other guild members
 
 The portal uses a **tiered membership system** with three levels:
-- **Associate (AGNS)** — Entry-level members with limited privileges (e.g., can publish max 3 articles/month)
-- **Partner (PGNS)** — Full members with unlimited publishing
-- **Fellow (FGNS)** — Senior members/institutional authorities with unlimited publishing
+- **Associate (AGNSW)** — Entry-level members with limited privileges (e.g., can publish max 3 articles/month)
+- **Partner (PGNSW)** — Full members with unlimited publishing
+- **Fellow (FGNSW)** — Senior members/institutional authorities with unlimited publishing
 
 The app is built as a **Vue 3 (Composition API) + Vite + Tailwind CSS v4** single-page application with **client-side routing** and **localStorage-based persistence** (i.e., no backend — all data is mock data stored in the browser).
 
@@ -38,7 +38,7 @@ The app is built as a **Vue 3 (Composition API) + Vite + Tailwind CSS v4** singl
 ## 3. PROJECT STRUCTURE
 
 ```
-gns-membersportal/
+gnsw-membersportal/
 ├── index.html              # Entry HTML
 ├── package.json            # Dependencies & scripts
 ├── vite.config.js          # Vite configuration
@@ -105,7 +105,7 @@ gns-membersportal/
 ## 4. ROUTES & AUTHENTICATION
 
 ### Authentication
-- Uses **localStorage** (`gns_user` key) to persist the logged-in user
+- Uses **localStorage** (`gnsw_user` key) to persist the logged-in user
 - Global **auth guard** in the router: all routes except `/login` require authentication
 - If a user is already logged in and visits `/login`, they are redirected to `/dashboard`
 - Auth state is managed in `App.vue` using Vue 3's **provide/inject** pattern:
@@ -149,9 +149,9 @@ Defined in `src/data/mockUsers.js`:
 
 | Tier | Role Value | Label | Abbreviation | Monthly Article Limit |
 |---|---|---|---|---|
-| `ROLE_ASSOCIATE` | 1 | Associate | AGNS | 3 |
-| `ROLE_MEMBER` | 2 | Partner | PGNS | Unlimited |
-| `ROLE_FELLOW` | 3 | Fellow | FGNS | Unlimited |
+| `ROLE_ASSOCIATE` | 1 | Associate | AGNSW | 3 |
+| `ROLE_MEMBER` | 2 | Partner | PGNSW | Unlimited |
+| `ROLE_FELLOW` | 3 | Fellow | FGNSW | Unlimited |
 
 The `canAccessTier(userTier, requiredTier)` function determines if a user can access content restricted to a certain tier level.
 
@@ -159,9 +159,9 @@ The `canAccessTier(userTier, requiredTier)` function determines if a user can ac
 
 | Name | Email | Password | Tier |
 |---|---|---|---|
-| Adaeze Okoye | adaeze@gns.ng | associate123 | Associate |
-| Emeka Nwosu | emeka@gns.ng | partner123 | Partner |
-| Dr. Funmi Adeyemi | funmi@gns.ng | fellow123 | Fellow |
+| Adaeze Okoye | adaeze@gnsw.ng | associate123 | Associate |
+| Emeka Nwosu | emeka@gnsw.ng | partner123 | Partner |
+| Dr. Funmi Adeyemi | funmi@gnsw.ng | fellow123 | Fellow |
 
 ---
 
@@ -171,7 +171,7 @@ The `canAccessTier(userTier, requiredTier)` function determines if a user can ac
 - **Path:** `/` (Dashboard.vue)
 - Shows a paginated feed of articles from guild members
 - **Tabs:** "For You", "Latest", "Saved", plus category-specific tabs
-- Each article card shows title, excerpt, author (with credentials like AGNS/PGNS/FGNS), read time, date, claps, and views
+- Each article card shows title, excerpt, author (with credentials like AGNSW/PGNSW/FGNSW), read time, date, claps, and views
 - "Load more" button for pagination (6 articles per page)
 - Right sidebar shows trending articles and writing tips
 
@@ -276,14 +276,14 @@ The `canAccessTier(userTier, requiredTier)` function determines if a user can ac
    - Load from localStorage (falling back to seed data)
    - Save back to localStorage
    - Merge user-created data with seed data
-3. **Key prefixes** — All localStorage keys use the `gns_` prefix (e.g., `gns_user`, `gns_drafts`, `gns_published`, `gns_settings`, `gns_profile`)
+3. **Key prefixes** — All localStorage keys use the `gnsw_` prefix (e.g., `gnsw_user`, `gnsw_drafts`, `gnsw_published`, `gnsw_settings`, `gnsw_profile`)
 
 ### How Drafts Work Specifically:
 - Draft CRUD operations are in `writing.js`
 - When a draft is created, it gets an `id` like `draft-{timestamp}`
-- Unpublished drafts are stored in the `gns_drafts` key
-- When published, the draft moves to `gns_published` with an `id` like `published-{timestamp}` and gets a `draftId` reference
-- Some draft IDs can be "hidden" (soft-deleted) via the `gns_hidden_draft_ids` key
+- Unpublished drafts are stored in the `gnsw_drafts` key
+- When published, the draft moves to `gnsw_published` with an `id` like `published-{timestamp}` and gets a `draftId` reference
+- Some draft IDs can be "hidden" (soft-deleted) via the `gnsw_hidden_draft_ids` key
 - Published posts can be "unpublished", which moves them back to drafts with a new draft ID
 - Word count is calculated by stripping HTML tags from the body content
 - Read time is calculated as `Math.ceil(wordCount / 200)` minutes
@@ -300,7 +300,7 @@ The `canAccessTier(userTier, requiredTier)` function determines if a user can ac
 
 ### Navigation Guards
 - Route-level `meta.requiresAuth` flag
-- `router.beforeEach` checks for `gns_user` in localStorage
+- `router.beforeEach` checks for `gnsw_user` in localStorage
 - Login redirect if not authenticated; dashboard redirect if already logged in
 
 ### Editor Technology
@@ -312,7 +312,7 @@ The `canAccessTier(userTier, requiredTier)` function determines if a user can ac
 ### UI/Design
 - Tailwind CSS v4 for all styling
 - Custom color scheme: dark text (`#111418`), guild red (`#8b1e21`), warm gray backgrounds (`#faf9f5`, `#eae8e4`)
-- Playfair Display font for the GNS logo/brand
+- Playfair Display font for the GNSW logo/brand
 - Source Serif 4 / Georgia serif font for the article editor body
 - Responsive design (mobile-first approach)
 - Iconify for icons (Lucide iconset primarily)
@@ -329,9 +329,9 @@ The `canAccessTier(userTier, requiredTier)` function determines if a user can ac
 
 4. **Images are base64 encoded** — Images uploaded through the editor or profile avatar are stored as base64 data URLs in localStorage. This has storage limitations.
 
-5. **The app name "GNS" is pronounced as individual letters** (G-N-S-W) or as "Guild of Nigerian Speechwriters."
+5. **The app name "GNSW" is pronounced as individual letters** (G-N-S-W) or as "Guild of Nigerian Speechwriters."
 
-6. **Tier abbreviations** — AGNS = Associate of the Guild of Nigerian Speechwriters, PGNS = Partner of the Guild of Nigerian Speechwriters, FGNS = Fellow of the Guild of Nigerian Speechwriters.
+6. **Tier abbreviations** — AGNSW = Associate of the Guild of Nigerian Speechwriters, PGNSW = Partner of the Guild of Nigerian Speechwriters, FGNSW = Fellow of the Guild of Nigerian Speechwriters.
 
 7. **The portal is meant to be private** — All non-login routes require authentication. The login page lists test credentials for development purposes.
 

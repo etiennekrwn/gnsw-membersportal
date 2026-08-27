@@ -1,4 +1,4 @@
-// Minimal static server for the GNS members portal.
+// Minimal static server for the GNSW members portal.
 // - Serves the Vite `dist/` build.
 // - SPA fallback: unknown routes -> index.html (so deep links reload correctly).
 // - Caching: hashed /assets/* are cached long-term (immutable);

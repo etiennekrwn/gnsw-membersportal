@@ -14,7 +14,7 @@ const lessonTitle = computed(() => {
 })
 function lessonIndex() {
   try {
-    return JSON.parse(localStorage.getItem('gns_course_progress') || '{}')[course.value?.id]?.completed ?? 0
+    return JSON.parse(localStorage.getItem('gnsw_course_progress') || '{}')[course.value?.id]?.completed ?? 0
   } catch { return 0 }
 }
 

@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 
 // Local notification source (server-backed feed is a later step).
-const NOTIF_KEY = 'gns_notifications_read'
+const NOTIF_KEY = 'gnsw_notifications_read'
 const seed = [
   { id: 1, type: 'clap', text: 'Adaeze Okoye clapped on your article.', time: '2h ago' },
   { id: 2, type: 'comment', text: 'Emeka Nwosu commented on "The First Hour…".', time: '1d ago' },

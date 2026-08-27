@@ -44,7 +44,7 @@ const eventTopics = [
     type: 'Guild Meeting',
     date: 'February 08, 2027',
     time: '10:00 AM - 12:00 PM WAT',
-    title: 'GNS Annual General Meeting 2027',
+    title: 'GNSW Annual General Meeting 2027',
     location: 'Guild Secretariat, Maitama, Abuja',
     city: 'Abuja',
     access: 'members',
@@ -106,7 +106,7 @@ const eventDetails = [
   {
     summary: 'The Guild’s annual meeting for member updates, planning, elections, and professional priorities.',
     description: [
-      'GNS Annual General Meeting 2027 brings together members, associates, and Guild leaders for a focused review of the past year and the work ahead.',
+      'GNSW Annual General Meeting 2027 brings together members, associates, and Guild leaders for a focused review of the past year and the work ahead.',
       'The meeting will include reports from the executive committee, updates on membership programmes, discussion of training priorities, and consideration of proposed initiatives for the next operating year.',
       'Members are encouraged to attend prepared to contribute ideas, ask questions, and help shape the Guild’s professional agenda.',
     ],
