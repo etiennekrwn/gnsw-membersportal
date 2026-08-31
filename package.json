@@ -11,6 +11,7 @@
   "dependencies": {
     "@faker-js/faker": "^10.5.0",
     "@iconify/vue": "^5.0.1",
+    "@paystack/inline-js": "^2.24.0",
     "@tailwindcss/vite": "^4.3.1",
     "@tiptap/extension-highlight": "^3.27.1",
     "@tiptap/extension-image": "^3.27.1",

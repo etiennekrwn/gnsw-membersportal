@@ -110,9 +110,11 @@ function readCachedSubscription() {
   }
 }
 
-function paymentDueFromCache() {
+function notActiveFromCache() {
   const sub = readCachedSubscription()
-  return !!(sub && sub.paymentDue)
+  // No cache yet → do not block (let PayDues/login resolve the real state).
+  if (!sub) return false
+  return !sub.isActive
 }
 
 router.beforeEach((to) => {
@@ -129,10 +131,11 @@ router.beforeEach((to) => {
     return { name: 'Dashboard' }
   }
 
-  // Persistent pay-wall: an accepted member who has not yet paid their first
-  // annual dues is held on /pay-dues (which is exempt via meta.payWall) until
-  // they pay. Every other page is blocked for them — there is no time limit.
-  if (isLoggedIn && !to.meta.payWall && paymentDueFromCache()) {
+  // Access gate: a logged-in member who is NOT in good standing (first dues
+  // unpaid = payment_due, OR a renewal lapsed = past_due/cancelled/expired)
+  // is held on /pay-dues (exempt via meta.payWall) until their subscription is
+  // active. No time limit.
+  if (isLoggedIn && !to.meta.payWall && notActiveFromCache()) {
     return { name: 'PayDues' }
   }
 
