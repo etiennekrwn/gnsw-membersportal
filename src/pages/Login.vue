@@ -140,6 +140,23 @@ async function handleLogin() {
       joinDate: null,
     })
 
+    // Load and cache subscription state so the pay-wall guard can enforce first-dues payment.
+    let sub = null
+    try {
+      const subRes = await apiClient.get('/members/subscription')
+      sub = subRes.data?.data || null
+      localStorage.setItem('portal_subscription', JSON.stringify(sub))
+    } catch (e) {
+      localStorage.removeItem('portal_subscription')
+    }
+
+    // A newly accepted member who has not paid their first annual dues is held
+    // on the pay-wall until they pay.
+    if (sub && sub.paymentDue) {
+      router.push('/pay-dues')
+      return
+    }
+
     router.push(redirectPath && !redirectPath.startsWith('/login') ? redirectPath : '/')
   } catch (err) {
     loginError.value = err.message || 'Invalid username or password.'

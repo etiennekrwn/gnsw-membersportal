@@ -28,6 +28,7 @@ apiClient.interceptors.response.use(
       if (error.response.status === 401) {
         localStorage.removeItem('portal_token')
         localStorage.removeItem('portal_user')
+        localStorage.removeItem('portal_subscription')
         window.location.href = '/login'
         return Promise.reject(new Error('Session expired. Please log in again.'))
       }

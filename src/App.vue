@@ -26,6 +26,7 @@ provide('handleSignout', () => {
   localStorage.removeItem('portal_user')
   localStorage.removeItem('portal_token')
   localStorage.removeItem('portal_onboarding_completed')
+  localStorage.removeItem('portal_subscription')
 })
 
 // Guest login-wall state -- visitors browse the feed first,

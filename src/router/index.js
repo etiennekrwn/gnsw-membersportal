@@ -6,6 +6,7 @@ import SetPassword from '../pages/SetPassword.vue'
 import ForgotPassword from '../pages/ForgotPassword.vue'
 import ResetPassword from '../pages/ResetPassword.vue'
 import Onboarding from '../pages/Onboarding.vue'
+import PayDues from '../pages/PayDues.vue'
 import Events from '../pages/Events.vue'
 import EventDetail from '../components/events/Eventdetail.vue'
 import Article from '../pages/Article.vue'
@@ -35,6 +36,15 @@ const routes = [
     name: 'Onboarding',
     component: Onboarding,
     meta: { requiresAuth: true },
+  },
+
+  // Persistent pay-wall for accepted members who have not yet paid their first
+  // annual dues. Requires auth; explicitly exempt from the paywall redirect.
+  {
+    path: '/pay-dues',
+    name: 'PayDues',
+    component: PayDues,
+    meta: { requiresAuth: true, payWall: true },
   },
 
   // Editor routes — full screen, no layout wrapper
@@ -92,24 +102,43 @@ const router = createRouter({
 // in-app by the login wall.
 const PUBLIC_ROUTES = new Set(['Login', 'SetPassword', 'ForgotPassword', 'ResetPassword', 'Dashboard', 'Article', 'AuthorProfile', 'NotFound'])
 
+function readCachedSubscription() {
+  try {
+    return JSON.parse(localStorage.getItem('portal_subscription') || 'null')
+  } catch {
+    return null
+  }
+}
+
+function paymentDueFromCache() {
+  const sub = readCachedSubscription()
+  return !!(sub && sub.paymentDue)
+}
+
 router.beforeEach((to) => {
   const token = localStorage.getItem('portal_token')
   const isLoggedIn = !!token
-
-  // Public pages are browsable without an account
-  if (PUBLIC_ROUTES.has(to.name)) {
-    return true
-  }
 
   // Require login for member pages (remember where they were headed)
   if (to.meta.requiresAuth && !isLoggedIn) {
     return { name: 'Login', query: { redirect: to.fullPath } }
   }
 
-  // If logged in, never show the login page (onboarding is NOT forced -
-  // it stays available at /onboarding and from the profile)
+  // If logged in, never show the login page
   if (to.name === 'Login' && isLoggedIn) {
     return { name: 'Dashboard' }
+  }
+
+  // Persistent pay-wall: an accepted member who has not yet paid their first
+  // annual dues is held on /pay-dues (which is exempt via meta.payWall) until
+  // they pay. Every other page is blocked for them — there is no time limit.
+  if (isLoggedIn && !to.meta.payWall && paymentDueFromCache()) {
+    return { name: 'PayDues' }
+  }
+
+  // Public pages are browsable without an account (and by paying members)
+  if (PUBLIC_ROUTES.has(to.name)) {
+    return true
   }
 })
 
