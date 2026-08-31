@@ -30,7 +30,6 @@ const reasonForJoining = ref('')
 const socials = ref('')
 const city = ref('')
 const zone = ref('')
-const languages = ref([])
 
 // Stats
 const draftsCount = ref(0)
@@ -72,8 +71,8 @@ async function loadProfileData() {
 
     // Set optional fields from member profile
     employer.value = profile.organisation || ''
-    linkedin.value = profile.linkedInProfile || ''
-    socials.value = profile.socials || ''
+        linkedin.value = profile.currentProfessionalRole || ''
+        socials.value = profile.socialMediaPlatform || ''
     reasonForJoining.value = profile.reasonForJoining || ''
     city.value = profile.city || ''
     zone.value = profile.zone || ''
@@ -107,18 +106,16 @@ function cancelEditing() {
 
 async function saveProfileData() {
   try {
-    await apiClient.put('/members/profile', {
+        await apiClient.put('/members/profile', {
       organisation: employer.value,
       bio: bio.value,
-      sectors: specializations.value.join(', '),
+      currentProfessionalRole: linkedin.value,
       phone: '',
-      speechTypes: '',
-      languages: languages.value.join(', '),
+      highestQualification: '',
       zone: zone.value,
       city: city.value,
       profileImageUrl: null,
-      linkedInProfile: linkedin.value,
-      socials: socials.value,
+      socialMediaPlatform: socials.value,
     })
     isEditing.value = false
     saved.value = true
@@ -321,17 +318,12 @@ onMounted(() => {
               <Icon icon="lucide:globe" class="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span class="truncate">{{ socials }}</span>
             </a>
-            <a v-if="linkedin" :href="linkedin" target="_blank" class="flex items-center gap-2 text-[12.5px] text-[#1a1a1a] hover:text-[#8b1e21] transition-colors">
-              <Icon icon="lucide:linkedin" class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              LinkedIn profile
+                        <a v-if="linkedin" :href="linkedin.startsWith('http') ? linkedin : `https://${linkedin}`" target="_blank" class="flex items-center gap-2 text-[12.5px] text-[#1a1a1a] hover:text-[#8b1e21] transition-colors">
+              <Icon icon="lucide:globe" class="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span class="truncate">{{ linkedin }}</span>
             </a>
           </div>
 
-          <!-- Languages -->
-          <template v-if="languages.length">
-            <p class="text-[10.5px] font-bold uppercase tracking-widest text-slate-500 mb-3">Languages</p>
-            <p class="text-[12.5px] text-[#1a1a1a]">{{ languages.join(', ') }}</p>
-          </template>
         </div>
 
         <!-- Main -->

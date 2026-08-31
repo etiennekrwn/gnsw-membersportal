@@ -59,7 +59,21 @@ async function verifyAndEnter(reference) {
       router.push('/')
     }
   } catch (e) {
-    error.value = e.message || 'We could not verify your payment yet. Please try again in a moment.'
+    // If the backend says the subscription is already active (e.g. the webhook
+    // activated us while this page was open), treat it as success and redirect.
+    if (e.response?.data?.message === 'Your membership is already active.') {
+      successMsg.value = 'Your membership is already active!'
+      const sub = await loadSubscription()
+      if (sub && sub.isActive) {
+        router.push('/')
+        return
+      }
+      // Subscription still not active despite the message — show the error
+      // so the user knows something needs admin attention.
+      error.value = 'Your membership was activated but your session could not be confirmed. Please sign out and back in.'
+    } else {
+      error.value = e.message || 'We could not verify your payment yet. Please try again in a moment.'
+    }
   } finally {
     checking.value = false
   }
