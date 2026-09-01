@@ -11,7 +11,7 @@ import apiClient, {
 } from '../api/client.js'
 import { setTheme, getTheme, applyTheme } from '../utils/theme.js'
 
-// Settings state (loaded from the real API â€” no privacy section)
+// Settings state (loaded from the real API — no privacy section)
 const settings = ref({
   notifications: {
     emailNotifications: true,
