@@ -5,6 +5,7 @@ import apiClient from '../api/client.js'
 import PaystackPop from '@paystack/inline-js'
 
 const router = useRouter()
+const currentUser = inject('currentUser')
 const handleSignout = inject('handleSignout')
 
 const loading = ref(true)
@@ -132,6 +133,24 @@ onMounted(async () => {
       </div>
 
       <div class="p-8">
+        <!-- Account identity: shows WHICH account is about to be charged. -->
+        <div v-if="!paid && currentUser" class="mb-6 pb-5 border-b border-[#eae8e4] flex items-center gap-3">
+          <div class="w-11 h-11 rounded-full bg-[#8b1e21] text-white flex items-center justify-center font-semibold text-sm shrink-0">
+            {{ currentUser.initials || (currentUser.name?.[0] || '' ).toUpperCase() }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-[10px] uppercase tracking-widest text-gray-400 font-medium">Signed in as</p>
+            <p class="text-sm font-semibold text-[#111418] truncate">{{ currentUser.name }}</p>
+            <p class="text-[11px] text-gray-500 truncate">{{ currentUser.email }}</p>
+          </div>
+          <button
+            @click="signOut"
+            class="shrink-0 text-[11px] text-[#8b1e21] hover:underline font-medium whitespace-nowrap"
+          >
+            Not you?&nbsp;Switch account
+          </button>
+        </div>
+
         <!-- Success view shown after payment is confirmed -->
         <div v-if="paid" class="text-center py-6">
           <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
