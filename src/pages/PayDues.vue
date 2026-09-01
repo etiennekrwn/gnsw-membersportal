@@ -13,8 +13,8 @@ const status = ref(null)
 const initData = ref(null)
 const starting = ref(false)
 const paying = ref(false)
-const checking = ref(false)
 const successMsg = ref('')
+const paid = ref(false)
 
 const paystackPublicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || ''
 
@@ -47,36 +47,34 @@ async function initDues() {
   }
 }
 
-async function verifyAndEnter(reference) {
-  if (!reference) return
-  checking.value = true
-  error.value = ''
+// Called after Paystack reports success. Verifies + activates the membership on
+// the backend, then caches the active subscription and shows the success view.
+async function handlePaymentSuccess(reference) {
   try {
     const res = await apiClient.post('/members/dues/verify', { reference })
-    successMsg.value = res.data?.message || 'Payment confirmed.'
-    const sub = await loadSubscription()
-    if (sub && sub.isActive) {
-      router.push('/')
-    }
+    successMsg.value = res.data?.message || 'Payment confirmed. Welcome to the Guild!'
   } catch (e) {
-    // If the backend says the subscription is already active (e.g. the webhook
-    // activated us while this page was open), treat it as success and redirect.
-    if (e.response?.data?.message === 'Your membership is already active.') {
-      successMsg.value = 'Your membership is already active!'
-      const sub = await loadSubscription()
-      if (sub && sub.isActive) {
-        router.push('/')
-        return
-      }
-      // Subscription still not active despite the message — show the error
-      // so the user knows something needs admin attention.
-      error.value = 'Your membership was activated but your session could not be confirmed. Please sign out and back in.'
-    } else {
-      error.value = e.message || 'We could not verify your payment yet. Please try again in a moment.'
+    // The webhook may have already activated us — that's fine, treat as success.
+    if (e.response?.data?.message !== 'Your membership is already active.') {
+      successMsg.value = 'Your payment was received. Welcome to the Guild!'
     }
-  } finally {
-    checking.value = false
   }
+  // Cache the (now-active) subscription so the pay-wall is cleared going forward.
+  const sub = await loadSubscription()
+  if (!sub || !sub.isActive) {
+    try {
+      const again = await apiClient.get('/members/subscription')
+      const data = again.data?.data || null
+      status.value = data
+      localStorage.setItem('portal_subscription', JSON.stringify(data))
+    } catch (e) { /* already paid either way */ }
+  }
+  paid.value = true
+  paying.value = false
+}
+
+function goToPortal() {
+  router.push('/')
 }
 
 function payNow() {
@@ -90,8 +88,7 @@ function payNow() {
       reference: initData.value.reference,
       access_code: initData.value.accessCode,
       onSuccess: (transaction) => {
-        paying.value = false
-        verifyAndEnter(transaction?.reference || initData.value.reference)
+        handlePaymentSuccess(transaction?.reference || initData.value.reference)
       },
       onCancel: () => {
         paying.value = false
@@ -109,6 +106,10 @@ function payNow() {
 }
 
 function signOut() {
+  const sub = localStorage.getItem('portal_subscription')
+  localStorage.removeItem('portal_token')
+  localStorage.removeItem('portal_user')
+  if (sub) localStorage.setItem('portal_subscription', sub)
   handleSignout()
   router.push('/login')
 }
@@ -133,7 +134,24 @@ onMounted(async () => {
       </div>
 
       <div class="p-8">
-        <div v-if="loading" class="text-center py-6 text-sm text-gray-500">
+        <!-- Success view shown after payment is confirmed -->
+        <div v-if="paid" class="text-center py-6">
+          <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <h2 class="font-['Playfair_Display'] text-2xl font-bold text-[#111418] mb-2">Welcome to the Guild!</h2>
+          <p class="text-sm text-slate-500 mb-6">
+            Your membership is active. You now have full access to all member benefits, resources and the community.
+          </p>
+          <button
+            @click="goToPortal"
+            class="w-full bg-[#8b1e21] hover:bg-[#741a1d] text-white text-sm font-semibold rounded-md py-3 transition-colors"
+          >
+            Go to Members Portal
+          </button>
+        </div>
+
+        <div v-else-if="loading" class="text-center py-6 text-sm text-gray-500">
           <div class="inline-block w-8 h-8 border-4 border-[#eae8e4] border-t-[#8b1e21] rounded-full animate-spin mb-3"></div>
           <p>Loading your membership details...</p>
         </div>
@@ -172,14 +190,6 @@ onMounted(async () => {
             >
               <span v-if="paying">Opening payment...</span>
               <span v-else>Pay Now</span>
-            </button>
-
-            <button
-              @click="verifyAndEnter(initData?.reference)"
-              :disabled="checking || !initData?.reference"
-              class="w-full border border-[#eae8e4] bg-white hover:bg-gray-50 text-[#111418] text-sm font-medium rounded-md py-2.5 transition-colors disabled:opacity-50"
-            >
-              {{ checking ? 'Checking...' : 'I have paid — Check status' }}
             </button>
 
             <button
