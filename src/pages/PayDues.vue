@@ -54,7 +54,7 @@ async function handlePaymentSuccess(reference) {
     const res = await apiClient.post('/members/dues/verify', { reference })
     successMsg.value = res.data?.message || 'Payment confirmed. Welcome to the Guild!'
   } catch (e) {
-    // The webhook may have already activated us â€” that's fine, treat as success.
+    // The webhook may have already activated us — that's fine, treat as success.
     if (e.response?.data?.message !== 'Your membership is already active.') {
       successMsg.value = 'Your payment was received. Welcome to the Guild!'
     }
@@ -84,13 +84,13 @@ function payNow() {
   try {
     const popup = new PaystackPop()
     popup.newTransaction({
-      access_code: initData.value.accessCode,
+      accessCode: initData.value.accessCode,
       onSuccess: (transaction) => {
         handlePaymentSuccess(transaction?.reference || initData.value.reference)
       },
       onCancel: () => {
         paying.value = false
-        error.value = 'Payment was cancelled. Your application remains valid â€” you can pay any time.'
+        error.value = 'Payment was cancelled. Your application remains valid — you can pay any time.'
       },
       onError: () => {
         paying.value = false
@@ -167,7 +167,7 @@ onMounted(async () => {
             <p class="text-[10px] uppercase tracking-widest text-gray-400 font-semibold mb-1">Annual Membership Subscription</p>
             <p class="text-[11px] text-gray-500 mb-1">Tier: {{ status?.tier || 'Member' }}</p>
             <p class="text-3xl font-bold text-[#8b1e21] mt-2">
-              {{ initData?.amount ? 'â‚¦' + (initData.amount / 100).toLocaleString() : (status?.annualFee || '') }}
+              {{ initData?.amount ? '₦' + (initData.amount / 100).toLocaleString() : (status?.annualFee || '') }}
             </p>
             <p class="text-[11px] text-gray-400 mt-1">Billed annually and renewable each year</p>
           </div>
